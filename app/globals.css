@@ -567,6 +567,15 @@ html.reveal-on .hero__img {
   font-size: var(--size-caption);
   letter-spacing: var(--track-label);
   text-transform: uppercase;
+  /* underline is reserved for hover — kept as a transparent border so the
+     text never shifts when it appears */
+  padding-bottom: 2px;
+  border-bottom: var(--border-width) solid transparent;
+  transition: var(--transition-hover);
+}
+
+.site-header__link:hover {
+  border-bottom-color: currentColor;
 }
 
 .site-header--inverse .site-header__wordmark {
@@ -807,34 +816,68 @@ html.paged {
   overflow: hidden;
 }
 
-/* lead + CTA over the lower edge of the opened media */
+/* statement + CTA over the lower-left of the opened media. No panel —
+   only a soft gradient at the foot of the image for legibility */
 .hero-expand__content {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-8);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
   padding: var(--space-11) var(--page-pad) var(--space-10);
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.55),
+    rgba(0, 0, 0, 0.42),
+    rgba(0, 0, 0, 0.12) 55%,
     rgba(0, 0, 0, 0) 100%
   );
 }
 
-.hero-expand__lead {
+.hero-expand__statement {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(36px, 4.4vw, 64px);
+  line-height: 1.02;
+  letter-spacing: var(--track-display);
+  text-transform: lowercase;
+  color: var(--white);
+  max-width: 24ch;
+}
+
+.hero-expand__desc {
   margin: 0;
   font-family: var(--font-text);
-  font-size: var(--size-body);
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.85);
-  max-width: 100ch;
-  text-wrap: pretty;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+  /* line breaks are set in data.ts; only fold further on very narrow screens */
+  max-width: 100%;
+}
+
+.hero-expand__content .btn {
+  margin-top: var(--space-2);
 }
 
 @media (max-width: 600px) {
+  .about__heading {
+    font-size: 40px;
+  }
+
+  .about__line {
+    white-space: normal;
+  }
+
   .hero-expand__content {
-    padding: var(--space-8) var(--space-5);
+    padding: var(--space-10) var(--space-5) var(--space-8);
     gap: var(--space-5);
+  }
+
+  .hero-expand__statement {
+    font-size: clamp(30px, 8.5vw, 36px);
+  }
+
+  .hero-expand__desc {
+    font-size: 13px;
   }
 }
 
@@ -852,13 +895,21 @@ html.paged {
 
 .about__heading {
   font-family: var(--font-text);
-  /* design values: clamp(40px, 3.6vw, 78px) + max-width 16ch — the big
-     four-line block from the canvas */
-  font-size: clamp(40px, 3.6vw, 78px);
-  line-height: 1.1;
+  /* base size for narrow screens; on two-column layouts About.tsx sets an
+     inline font-size so the four lines fill the height of the column beside
+     it (line-height must match HEADING_LINE_HEIGHT there) */
+  font-size: 52px;
+  line-height: 1.02;
   letter-spacing: -0.02em;
-  max-width: 16ch;
-  text-wrap: pretty;
+  text-align: left;
+  align-self: center;
+  justify-self: start;
+  margin: 0;
+}
+
+.about__line {
+  display: block;
+  white-space: nowrap;
 }
 
 .about__aside {

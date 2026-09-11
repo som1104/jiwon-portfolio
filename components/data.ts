@@ -8,16 +8,25 @@ export const navItems = ["Work", "About", "Stack", "Notes"];
 
 export const hero = {
   eyebrow: "Frontend Developer · Seoul",
-  // TODO(지원): 히어로 대형 제목 문구 확정 — 현재는 디자인 파일의 placeholder.
+  // first screen — two-line title (serif / spaced sans), both lowercase
   title: "portfolio-",
-  lead: "시각적인 경험을 만들어 온 감각을 바탕으로 사용자의 경험을 설계하고 구현합니다.",
+  subtitle: "visual code",
+  // expanded screen — statement (lowercase, two lines) + one Korean line
+  statement: ["from visual instinct", "to digital experience."],
+  // one string per line
+  description: [
+    "서양화와 콘텐츠 제작에서 쌓은 시각적 감각을 바탕으로",
+    "사용자의 경험을 설계하고 구현합니다.",
+  ],
   cta: "View projects",
   // shown under the small hero card until it has grown to full size
   scrollHint: "Scroll to expand",
 };
 
 export const about = {
-  heading: ["I bring a visual perspective", "to the interfaces people use."],
+  // one string per line — the About heading is sized to fill the height of
+  // the column beside it, so the line breaks are fixed here, not by width
+  heading: ["I bring a visual", "perspective", "to the interfaces", "people use."],
   quote: ["콘텐츠를 만드는 사람에서 사용자가", "직접 경험하는 화면을 만드는 사람으로"],
   body: "서양화를 전공하고 약 4년간 웹툰 제작 환경에서 연출과 후보정 업무를 담당했습니다. 콘텐츠의 색감과 분위기, 화면의 구성과 완성도를 고민해 온 경험을 바탕으로 현재 프론트엔드 개발을 공부하고 있습니다. 시각적인 결과물을 만드는 것을 넘어 사용자가 직접 경험하는 인터페이스를 설계하고 구현하는 것을 목표로 합니다.",
   meta: [

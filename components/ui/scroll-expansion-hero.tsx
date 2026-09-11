@@ -29,6 +29,8 @@ interface ScrollExpandMediaProps {
   posterSrc?: string;
   bgImageSrc: string;
   title?: string;
+  /** second title line (sans, spaced); falls back to the words after the first */
+  subtitle?: string;
   date?: string;
   scrollToExpand?: string;
   textBlend?: boolean;
@@ -40,6 +42,11 @@ interface ScrollExpandMediaProps {
 
 const EXPAND_MS = 1000;
 const COLLAPSE_MS = 700;
+/** pause between "fully open" and the statement fading up */
+const STATEMENT_DELAY_MS = 400;
+/** how far the title lines travel by the time the media is full-screen */
+const TITLE_TRAVEL_VW = { desktop: 110, mobile: 140 };
+const smoothstep = (t: number) => t * t * (3 - 2 * t);
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 const easeInOutCubic = (t: number) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -50,6 +57,7 @@ const ScrollExpandMedia = ({
   posterSrc,
   bgImageSrc,
   title,
+  subtitle,
   date,
   scrollToExpand,
   textBlend,
@@ -59,6 +67,7 @@ const ScrollExpandMedia = ({
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [isMobileState, setIsMobileState] = useState<boolean>(false);
   const [viewport, setViewport] = useState({ w: 1440, h: 900 });
+  const [statementVisible, setStatementVisible] = useState(false);
 
   const progressRef = useRef(0);
   const frameRef = useRef(0);
@@ -131,7 +140,21 @@ const ScrollExpandMedia = ({
   }, []);
 
   const expanded = scrollProgress >= 1;
-  const showContent = scrollProgress > 0.75;
+
+  // the statement waits a beat after the media is fully open, and is gone
+  // the moment it starts closing
+  useEffect(() => {
+    if (!expanded) {
+      setStatementVisible(false);
+      return;
+    }
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const id = window.setTimeout(
+      () => setStatementVisible(true),
+      reduced ? 0 : STATEMENT_DELAY_MS,
+    );
+    return () => window.clearTimeout(id);
+  }, [expanded]);
 
   // card → full viewport, so the opened hero is a full-bleed photo with the
   // header sitting on top of it (like the original static hero)
@@ -139,15 +162,32 @@ const ScrollExpandMedia = ({
   const cardH = Math.min(400, viewport.h * 0.55);
   const mediaWidth = cardW + scrollProgress * (viewport.w - cardW);
   const mediaHeight = cardH + scrollProgress * (viewport.h - cardH);
-  const textTranslateX = scrollProgress * (isMobileState ? 180 : 150);
+  // the two title lines part in opposite directions; the second line starts
+  // a touch later so the composition opens rather than snaps
+  const travel = isMobileState ? TITLE_TRAVEL_VW.mobile : TITLE_TRAVEL_VW.desktop;
+  const line1X = smoothstep(scrollProgress) * travel;
+  const line2X =
+    smoothstep(Math.max(0, (scrollProgress - 0.08) / 0.92)) * travel;
+  const labelX = scrollProgress * (isMobileState ? 180 : 150);
 
-  const firstWord = title ? title.split(" ")[0] : "";
-  const restOfTitle = title ? title.split(" ").slice(1).join(" ") : "";
+  const line1 = title ?? "";
+  const line2 =
+    subtitle ?? (title ? title.split(" ").slice(1).join(" ") : "");
+  const firstLine =
+    subtitle === undefined && title ? title.split(" ")[0] : line1;
 
   const displayType: React.CSSProperties = {
     fontFamily: "var(--font-display)",
     letterSpacing: "var(--track-display)",
     lineHeight: 0.95,
+    color: "var(--white)",
+  };
+  const subtitleType: React.CSSProperties = {
+    fontFamily: "var(--font-text)",
+    fontWeight: 400,
+    letterSpacing: "0.18em",
+    textTransform: "lowercase",
+    lineHeight: 1.1,
     color: "var(--white)",
   };
   const labelType: React.CSSProperties = {
@@ -180,8 +220,6 @@ const ScrollExpandMedia = ({
           style={{
             objectFit: "cover",
             objectPosition: "center",
-            filter: "blur(18px)",
-            transform: "scale(1.08)",
           }}
           priority
         />
@@ -274,17 +312,20 @@ const ScrollExpandMedia = ({
             </div>
           )}
 
-          {/* lead + CTA, over the bottom of the media once it is open */}
+          {/* statement + CTA, lower left of the open media, a beat later */}
           <motion.div
             className="absolute inset-x-0 bottom-0 z-20"
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{
-              opacity: showContent ? 1 : 0,
-              y: showContent ? 0 : 16,
+              opacity: statementVisible ? 1 : 0,
+              y: statementVisible ? 0 : 24,
             }}
-            transition={{ duration: 0.7, ease: [0.17, 0.84, 0.44, 1] }}
-            aria-hidden={!showContent}
-            style={{ pointerEvents: showContent ? "auto" : "none" }}
+            transition={{
+              duration: statementVisible ? 0.9 : 0.25,
+              ease: [0.17, 0.84, 0.44, 1],
+            }}
+            aria-hidden={!statementVisible}
+            style={{ pointerEvents: statementVisible ? "auto" : "none" }}
           >
             {children}
           </motion.div>
@@ -296,7 +337,7 @@ const ScrollExpandMedia = ({
                 style={{
                   ...labelType,
                   opacity: 1 - scrollProgress,
-                  transform: `translateX(-${textTranslateX}vw)`,
+                  transform: `translateX(-${labelX}vw)`,
                 }}
               >
                 {date}
@@ -308,7 +349,7 @@ const ScrollExpandMedia = ({
                 style={{
                   ...labelType,
                   opacity: 1 - scrollProgress,
-                  transform: `translateX(${textTranslateX}vw)`,
+                  transform: `translateX(${labelX}vw)`,
                 }}
               >
                 {scrollToExpand}
@@ -318,23 +359,30 @@ const ScrollExpandMedia = ({
         </div>
 
         <h1
-          className={`flex items-center justify-center text-center gap-4 w-full relative z-10 transition-none flex-col m-0 text-5xl md:text-7xl lg:text-8xl font-medium ${
+          className={`flex items-center justify-center text-center w-full relative z-10 transition-none flex-col m-0 ${
             textBlend ? "mix-blend-difference" : "mix-blend-normal"
           }`}
-          style={displayType}
+          style={{ gap: "0.32em", fontSize: "clamp(48px, 6.6vw, 96px)" }}
         >
           <motion.span
-            className="block transition-none"
-            style={{ transform: `translateX(-${textTranslateX}vw)` }}
+            className="block transition-none font-medium"
+            style={{
+              ...displayType,
+              transform: `translateX(-${line1X}vw)`,
+            }}
           >
-            {firstWord}
+            {firstLine}
           </motion.span>
-          {restOfTitle && (
+          {line2 && (
             <motion.span
               className="block transition-none"
-              style={{ transform: `translateX(${textTranslateX}vw)` }}
+              style={{
+                ...subtitleType,
+                fontSize: "0.4em",
+                transform: `translateX(${line2X}vw)`,
+              }}
             >
-              {restOfTitle}
+              {line2}
             </motion.span>
           )}
         </h1>

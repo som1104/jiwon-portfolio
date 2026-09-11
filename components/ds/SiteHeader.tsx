@@ -1,5 +1,3 @@
-import TextLink from "./TextLink";
-
 type SiteHeaderProps = {
   wordmark: string;
   items: string[];
@@ -10,6 +8,8 @@ type SiteHeaderProps = {
 /**
  * Sticky-height header. Transparent white-on-photo over the hero (inverse),
  * navigates on words. Nav targets are the lowercased item names as anchors.
+ * The action (Contact) is styled like the other items: no underline at rest,
+ * hairline underline on hover.
  */
 export default function SiteHeader({
   wordmark,
@@ -36,13 +36,9 @@ export default function SiteHeader({
           </a>
         ))}
         {action ? (
-          <TextLink
-            href="#contact"
-            size="caption"
-            tone={inverse ? "inverse" : "default"}
-          >
+          <a className="site-header__link" href="#contact">
             {action}
-          </TextLink>
+          </a>
         ) : null}
       </nav>
     </header>
