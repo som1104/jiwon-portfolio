@@ -15,7 +15,7 @@ export const hero = {
   statement: ["from visual instinct", "to digital experience."],
   // one string per line
   description: [
-    "서양화와 콘텐츠 제작에서 쌓은 시각적 감각을 바탕으로",
+    "콘텐츠 제작에서 쌓은 시각적 감각을 바탕으로",
     "사용자의 경험을 설계하고 구현합니다.",
   ],
   cta: "View projects",
@@ -75,9 +75,8 @@ export const projects: Project[] = [
     summary:
       "하나의 레퍼런스 이미지를 기준으로 여러 이미지의 톤을 일괄 보정하고 세부 조정할 수 있는 웹 도구.",
     stack: "React · JavaScript · Canvas",
-    // TODO(지원): 데모 영상을 public/videos/tonemate-demo.mp4 에 넣고 아래 주석을 풀 것.
-    //             poster 는 첫 프레임 캡처(jpg) — 없으면 생략해도 됨.
-    // media: { type: "video", src: "/videos/tonemate-demo.mp4", poster: "/images/tonemate-poster.jpg" },
+    media: { type: "video", src: "/video/tonemate.mp4", poster: "/images/tonemate-Cover.png" },
+    thumb: "/images/tonemate-Cover.png",
     links: [
       { label: "Live site", href: "https://tone-match-tool.onrender.com", external: true },
       // TODO(지원): 케이스 스터디 링크가 준비되면 주석 해제
