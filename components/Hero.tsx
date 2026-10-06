@@ -44,7 +44,7 @@ export default function Hero() {
             <br />
             {hero.description[1]}
           </p>
-          <Button href="#work" variant="inverse" size="lg">
+          <Button href={hero.ctaHref} variant="inverse" size="lg">
             {hero.cta}
           </Button>
         </div>

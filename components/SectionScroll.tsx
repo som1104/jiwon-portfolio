@@ -1,7 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
+import { usePathname } from "next/navigation";
 import { heroControl } from "@/lib/hero-control";
+
+// Next's App Router does its own scroll-to-hash (scrollIntoView) after a
+// client-side <Link> navigation lands, racing this component's own
+// goToElement() for the same target — that race is the "stutter" (jump to
+// one spot, then jump again) reported on Back-to-Work → main. useLayoutEffect
+// (vs. useEffect) runs synchronously right after the new page's DOM commits
+// and before the browser paints that frame, so the correct scroll position
+// is set before anything is shown — eliminating the wrong-section flash too.
+// It's skipped on the server (SSR warns otherwise); this component always
+// renders null, so there's nothing for the server render to get wrong.
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /**
  * Full-page section pager. Renders nothing.
@@ -23,6 +36,11 @@ import { heroControl } from "@/lib/hero-control";
  *
  * Below MIN_WIDTH (phones) the page scrolls natively; only the hero's
  * open / close is driven by touch there.
+ *
+ * Only the home page ("/") is paged. Project detail pages
+ * (/projects/<slug>) are a normal case-study scroll — this component
+ * mounts once in the root layout, so it checks the route itself and
+ * detaches everything (no listeners, no html.paged) when it isn't "/".
  */
 
 const MIN_WIDTH = 768;
@@ -33,6 +51,10 @@ const SETTLE_MS = 140;
 const TOUCH_THRESHOLD = 28;
 /** a slide this much taller than the viewport gets a second stop */
 const EXTRA_STOP_MIN = 40;
+
+/** instant jump — never inherits a CSS scroll-behavior */
+const jump = (y: number) =>
+  window.scrollTo({ top: y, left: 0, behavior: "instant" as ScrollBehavior });
 
 const easeInOutCubic = (t: number) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -45,13 +67,24 @@ function normalizeDelta(e: WheelEvent) {
 }
 
 export default function SectionScroll() {
-  useEffect(() => {
+  const pathname = usePathname();
+
+  useIsomorphicLayoutEffect(() => {
+    const root = document.documentElement;
+    if (pathname !== "/") {
+      // project detail pages scroll natively
+      root.classList.remove("paged");
+      return;
+    }
+
     const reduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    const root = document.documentElement;
 
     let stops: number[] = [];
+    // which slide (and whether its "tall slide" second stop) each stop belongs
+    // to — lets index survive a recompute after resize / late layout shifts
+    let stopMeta: { el: HTMLElement; extra: boolean }[] = [];
     let index = 0;
     let animating = false;
     let frame = 0;
@@ -68,13 +101,27 @@ export default function SectionScroll() {
     const computeStops = () => {
       const h = vh();
       const next: number[] = [];
+      const meta: { el: HTMLElement; extra: boolean }[] = [];
       for (const el of slides()) {
         const top = Math.round(el.offsetTop);
         next.push(top);
+        meta.push({ el, extra: false });
         const extra = el.offsetHeight - h;
-        if (extra > EXTRA_STOP_MIN) next.push(top + extra);
+        if (extra > EXTRA_STOP_MIN) {
+          next.push(top + extra);
+          meta.push({ el, extra: true });
+        }
       }
+      const anchor = stopMeta[index];
       stops = next.length ? next : [0];
+      stopMeta = next.length ? meta : [];
+      if (anchor) {
+        const found = stopMeta.findIndex(
+          (m) => m.el === anchor.el && m.extra === anchor.extra,
+        );
+        const fallback = stopMeta.findIndex((m) => m.el === anchor.el);
+        index = found >= 0 ? found : fallback >= 0 ? fallback : Math.min(index, stops.length - 1);
+      }
     };
 
     const nearestIndex = (y: number) => {
@@ -95,14 +142,14 @@ export default function SectionScroll() {
         cancelAnimationFrame(frame);
         const from = window.scrollY;
         if (Math.abs(to - from) < 1 || ms <= 0) {
-          window.scrollTo(0, to);
+          jump(to);
           resolve();
           return;
         }
         const start = performance.now();
         const tick = (now: number) => {
           const t = Math.min((now - start) / ms, 1);
-          window.scrollTo(0, from + (to - from) * easeInOutCubic(t));
+          jump(from + (to - from) * easeInOutCubic(t));
           if (t < 1) frame = requestAnimationFrame(tick);
           else resolve();
         };
@@ -155,7 +202,10 @@ export default function SectionScroll() {
         const slide = el.closest<HTMLElement>("[data-slide]") ?? el;
         const top = Math.round(slide.getBoundingClientRect().top + window.scrollY);
         const target = nearestIndex(top);
-        if (target > 0 && hero && !hero.isExpanded()) await hero.expand();
+        // instant landings (return from a detail page, hash on load) must never
+        // wait on the hero's 1s open animation — that showed the top of the
+        // page first and jumped afterwards
+        if (!instant && target > 0 && hero && !hero.isExpanded()) await hero.expand();
         index = target;
         await scrollToY(
           stops[index],
@@ -247,7 +297,7 @@ export default function SectionScroll() {
         const hero = heroControl.get();
         if (hero && !hero.isExpanded()) {
           // hero closed: the page must stay at the top
-          window.scrollTo(0, 0);
+          jump(0);
           index = 0;
           return;
         }
@@ -302,20 +352,46 @@ export default function SectionScroll() {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     computeStops();
     // fonts / images can shift layout after first paint
-    const recompute = () => computeStops();
+    // while a hash landing is still settling (images/fonts loading), keep the
+    // target aligned; any real user input ends that
+    let pendingHash: HTMLElement | null = null;
+    let settleTimer = 0;
+    const endSettling = () => {
+      pendingHash = null;
+    };
+    const recompute = () => {
+      computeStops();
+      if (pendingHash && !animating && !isPaged()) {
+        const slide = pendingHash.closest<HTMLElement>("[data-slide]") ?? pendingHash;
+        const top = Math.round(slide.getBoundingClientRect().top + window.scrollY);
+        if (Math.abs(window.scrollY - top) > 2) jump(top);
+      }
+      // a late layout shift (fonts, images) must not leave a settled page
+      // sitting between sections
+      if (!animating && isPaged() && Math.abs(window.scrollY - stops[index]) > 2) {
+        const hero = heroControl.get();
+        if (!hero || hero.isExpanded() || index > 0) jump(stops[index]);
+      }
+    };
     window.addEventListener("load", recompute);
     const ro =
       "ResizeObserver" in window
-        ? new ResizeObserver(() => computeStops())
+        ? new ResizeObserver(() => recompute())
         : null;
     ro?.observe(document.body);
 
     const initial = location.hash
       ? document.querySelector<HTMLElement>(location.hash)
       : null;
-    if (initial) void goToElement(initial, true);
-    else window.scrollTo(0, 0);
+    if (initial) {
+      pendingHash = initial;
+      void goToElement(initial, true);
+      settleTimer = window.setTimeout(endSettling, 2500);
+    }
+    else jump(0);
 
+    window.addEventListener("wheel", endSettling, { passive: true });
+    window.addEventListener("touchstart", endSettling, { passive: true });
     window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("keydown", onKey);
     window.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -324,22 +400,36 @@ export default function SectionScroll() {
     window.addEventListener("resize", onResize);
     document.addEventListener("click", onClick);
 
+    // browser back/forward between "/#project-0X" entries (pushState from our
+    // own clicks doesn't fire this, so no double handling)
+    const onHashChange = () => {
+      const t = location.hash
+        ? document.querySelector<HTMLElement>(location.hash)
+        : null;
+      if (t) void goToElement(t, true);
+    };
+    window.addEventListener("hashchange", onHashChange);
+
     return () => {
       root.classList.remove("paged");
       cancelAnimationFrame(frame);
       window.clearTimeout(scrollTimer);
       window.clearTimeout(resizeTimer);
+      window.clearTimeout(settleTimer);
       ro?.disconnect();
       window.removeEventListener("load", recompute);
       window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("wheel", endSettling);
+      window.removeEventListener("touchstart", endSettling);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       document.removeEventListener("click", onClick);
+      window.removeEventListener("hashchange", onHashChange);
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }

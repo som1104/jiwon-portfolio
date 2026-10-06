@@ -34,7 +34,18 @@ export default function SiteFooter({
           <div key={col.title}>
             <Label tone="inverse">{col.title}</Label>
             <div className="site-footer__links">
-              {col.links.map((link) => (
+              {col.links.map((link) =>
+                link.href === "#" ? (
+                  // no destination yet (e.g. Resume) — show it as clearly
+                  // unavailable instead of a link that jumps nowhere
+                  <span
+                    key={link.label}
+                    className="site-footer__disabled"
+                    aria-disabled="true"
+                  >
+                    {link.label} (준비 중)
+                  </span>
+                ) : (
                 <TextLink
                   key={link.label}
                   href={link.href}
@@ -46,7 +57,8 @@ export default function SiteFooter({
                 >
                   {link.label}
                 </TextLink>
-              ))}
+                ),
+              )}
             </div>
           </div>
         ))}

@@ -73,6 +73,9 @@ const ScrollExpandMedia = ({
   const frameRef = useRef(0);
   const animatingRef = useRef(false);
   const sectionRef = useRef<HTMLDivElement | null>(null);
+  // whoever is currently `await`ing animateTo() — resolved on unmount so a
+  // caller (SectionScroll) can never be left awaiting forever
+  const pendingResolveRef = useRef<(() => void) | null>(null);
 
   const setProgress = useCallback((p: number) => {
     const clamped = Math.min(Math.max(p, 0), 1);
@@ -85,14 +88,19 @@ const ScrollExpandMedia = ({
     (to: number, ms: number, ease: (t: number) => number) =>
       new Promise<void>((resolve) => {
         cancelAnimationFrame(frameRef.current);
+        // a previous call that never finished (e.g. interrupted by this new
+        // one) must still resolve — otherwise its caller hangs forever
+        pendingResolveRef.current?.();
         const from = progressRef.current;
         if (from === to || ms <= 0) {
           setProgress(to);
           animatingRef.current = false;
+          pendingResolveRef.current = null;
           resolve();
           return;
         }
         animatingRef.current = true;
+        pendingResolveRef.current = resolve;
         const start = performance.now();
         const tick = (now: number) => {
           const t = Math.min((now - start) / ms, 1);
@@ -101,6 +109,7 @@ const ScrollExpandMedia = ({
             frameRef.current = requestAnimationFrame(tick);
           } else {
             animatingRef.current = false;
+            pendingResolveRef.current = null;
             resolve();
           }
         };
@@ -121,6 +130,12 @@ const ScrollExpandMedia = ({
     return () => {
       unregister();
       cancelAnimationFrame(frameRef.current);
+      animatingRef.current = false;
+      // this instance is going away — release anyone still awaiting its
+      // expand()/collapse() (e.g. a React Strict Mode dev double-mount, or a
+      // route change mid-animation) instead of leaving them stuck forever
+      pendingResolveRef.current?.();
+      pendingResolveRef.current = null;
     };
   }, [animateTo]);
 

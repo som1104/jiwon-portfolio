@@ -7,12 +7,15 @@ import { about } from "@/components/data";
 const HEADING_LINE_HEIGHT = 1.02;
 
 /**
- * The heading on the left is sized so its stacked lines are exactly as tall
- * as the text column on the right (quote + body + meta). That height depends
- * on fonts and wrapping, so it is measured rather than guessed: on mount and
- * on resize, font-size = column height / (lines × line-height), then reduced
- * if a line would overflow its column. When the grid collapses to one column
- * (narrow screens) the inline size is cleared and the CSS size applies.
+ * The bridge between the Hero's visual identity and Selected Work, and the
+ * full background story, in one combined section (eyebrow "01 —
+ * Introduction") — the heading on the left is sized so its stacked lines
+ * are exactly as tall as the text column on the right (quote + body +
+ * meta). That height depends on fonts and wrapping, so it is measured
+ * rather than guessed: on mount and on resize, font-size = column height /
+ * (lines × line-height), then reduced if a line would overflow its column.
+ * When the grid collapses to one column (narrow screens) the inline size
+ * is cleared and the CSS size applies.
  */
 export default function About() {
   const headingRef = useRef<HTMLHeadingElement | null>(null);

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SectionScroll from "@/components/SectionScroll";
+import RevealObserver from "@/components/RevealObserver";
 
 /**
  * Runs before first paint. Sets html[data-reveal="ready"] (which activates the
@@ -54,6 +55,7 @@ export default function RootLayout({
       <body>
         {children}
         <SectionScroll />
+        <RevealObserver />
       </body>
     </html>
   );

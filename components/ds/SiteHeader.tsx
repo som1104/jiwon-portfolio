@@ -1,15 +1,18 @@
+type NavItem = { label: string; href: string };
+
 type SiteHeaderProps = {
   wordmark: string;
-  items: string[];
+  items: NavItem[];
   action?: string;
   tone?: "ink" | "inverse";
 };
 
 /**
  * Sticky-height header. Transparent white-on-photo over the hero (inverse),
- * navigates on words. Nav targets are the lowercased item names as anchors.
- * The action (Contact) is styled like the other items: no underline at rest,
- * hairline underline on hover.
+ * navigates on words. Each item carries its own target (Work → the first
+ * Selected Work slide, not a single grid section). The action (Contact) is
+ * styled like the other items: no underline at rest, hairline underline on
+ * hover.
  */
 export default function SiteHeader({
   wordmark,
@@ -27,12 +30,8 @@ export default function SiteHeader({
       </a>
       <nav className="site-header__nav">
         {items.map((item) => (
-          <a
-            key={item}
-            className="site-header__link"
-            href={`#${item.toLowerCase()}`}
-          >
-            {item}
+          <a key={item.label} className="site-header__link" href={item.href}>
+            {item.label}
           </a>
         ))}
         {action ? (

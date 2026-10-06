@@ -1,4 +1,9 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import Link from "next/link";
 import ImageFrame from "@/components/ds/ImageFrame";
+import Slideshow from "@/components/ds/Slideshow";
 import type { Project } from "@/components/data";
 
 type ProjectSectionProps = {
@@ -6,17 +11,17 @@ type ProjectSectionProps = {
   /** running number for the "01 / 03" counter */
   position: number;
   total: number;
-  /** eyebrow index of the whole project block (03 — Project 01) */
+  /** eyebrow index of this slide (02 — Selected Work, 03 — …) */
   sectionIndex: string;
 };
 
 /**
- * One full-screen project section. Same layout for every project so the
- * placeholders (status: "soon") can be swapped for real content by editing
- * data.ts only. Entrance is the site's own reveal system: the four groups
- * (number → title → visual → meta) are direct children of the
- * [data-reveal-children] element, so they stagger in with the existing
- * 0.6s ease-out fade + 24px rise.
+ * One full-screen Selected Work slide — a quick-scan showcase, not a case
+ * study: number, name, subtitle, a line or two of description, stack, a
+ * representative image/video, and three ways onward (the project's own
+ * detail page, plus its live site and GitHub). Deep case-study content lives
+ * on /projects/<slug> (see app/projects/[slug]/page.tsx) so no single
+ * project dominates the main page.
  */
 export default function ProjectSection({
   project,
@@ -24,12 +29,34 @@ export default function ProjectSection({
   total,
   sectionIndex,
 }: ProjectSectionProps) {
-  const soon = project.status === "soon";
   const counter = `${String(position).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  // The main page is a single continuous scroll — every project's media is
+  // mounted at once, not just the one currently in view. Without this, two
+  // autoplaying 1080p videos decode simultaneously the whole time someone
+  // is on "/", which can drop frames / look lower quality than the same
+  // video alone on its detail page. Only decode the one actually on screen.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.3 },
+    );
+    io.observe(video);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <section
-      className={`project slide${soon ? " project--soon" : ""}`}
+      className="project slide"
       id={project.id}
       data-slide
       aria-labelledby={`${project.id}-title`}
@@ -37,8 +64,7 @@ export default function ProjectSection({
       <div className="project__inner" data-reveal-children>
         <div className="project__head">
           <p className="eyebrow">
-            <span className="eyebrow__i">{sectionIndex}</span> — Project{" "}
-            {project.index}
+            <span className="eyebrow__i">{sectionIndex}</span> — Selected Work
           </p>
           <p className="eyebrow">{counter}</p>
         </div>
@@ -47,20 +73,25 @@ export default function ProjectSection({
           <h2 className="project__title" id={`${project.id}-title`}>
             {project.title}
           </h2>
-          {project.subtitle ? (
-            <p className="project__subtitle">{project.subtitle}</p>
+          <p className="project__subtitle">{project.subtitle}</p>
+          {project.roleTags?.length ? (
+            <p className="project__roles">{project.roleTags.join(" · ")}</p>
           ) : null}
         </div>
 
         <div className="project__visual">
           {project.media?.type === "video" ? (
             <figure className="frame">
-              <div className="frame__well project__well">
+              <div
+                className="frame__well project__well"
+                style={{ aspectRatio: project.media.aspect ?? "16 / 9" }}
+              >
                 <video
+                  ref={videoRef}
                   className="project__video"
                   src={project.media.src}
                   poster={project.media.poster}
-                  autoPlay
+                  aria-label={`${project.title} 프리뷰 영상`}
                   muted
                   loop
                   playsInline
@@ -74,44 +105,95 @@ export default function ProjectSection({
               alt={project.title}
               ratio="16 / 10"
             />
+          ) : project.media?.type === "slideshow" ? (
+            project.media.secondaryImages?.length ? (
+              <div className="project__visual-pair">
+                <figure className="frame">
+                  <div
+                    className={`frame__well project__well${
+                      project.media.orientation === "portrait" ? " project__well--portrait" : ""
+                    }`}
+                  >
+                    <Slideshow
+                      images={project.media.images}
+                      captions={project.media.captions}
+                      alt={project.title}
+                      controls={false}
+                    />
+                  </div>
+                </figure>
+                <figure className="frame">
+                  <div className="frame__well project__well project__well--desktop-slide">
+                    <Slideshow
+                      images={project.media.secondaryImages}
+                      alt={`${project.title} 웹 버전`}
+                      controls={false}
+                    />
+                  </div>
+                </figure>
+              </div>
+            ) : (
+              <figure className="frame">
+                <div
+                  className={`frame__well project__well${
+                    project.media.orientation === "portrait" ? " project__well--portrait" : ""
+                  }`}
+                >
+                  <Slideshow
+                    images={project.media.images}
+                    captions={project.media.captions}
+                    alt={project.title}
+                    controls={false}
+                  />
+                </div>
+              </figure>
+            )
           ) : (
             <figure className="frame">
               <div className="frame__well project__well">
-                <div className="frame__placeholder">
-                  {soon ? "Coming soon" : "Demo video"}
-                </div>
+                <div className="frame__placeholder">Preview coming soon</div>
               </div>
             </figure>
           )}
         </div>
 
         <div className="project__meta">
-          {soon ? (
-            <p className="project__soon">Coming Soon</p>
-          ) : (
-            <>
-              {project.summary ? (
-                <p className="project__summary">{project.summary}</p>
-              ) : null}
-              <p className="project__stack">{project.stack}</p>
-              {project.links?.length ? (
-                <div className="project__links">
-                  {project.links.map((l) => (
-                    <a
-                      key={l.label}
-                      className="work__link"
-                      href={l.href}
-                      {...(l.external
-                        ? { target: "_blank", rel: "noopener noreferrer" }
-                        : {})}
-                    >
-                      {l.label} <span className="work__arrow">→</span>
-                    </a>
-                  ))}
-                </div>
-              ) : null}
-            </>
-          )}
+          <p className="project__summary">
+            {project.description.map((line, i) => (
+              <span key={line}>
+                {line}
+                {i < project.description.length - 1 ? <br /> : null}
+              </span>
+            ))}
+          </p>
+          <p className="project__stack">{project.stack}</p>
+          <div className="project__links">
+            <Link
+              className="work__link project__link--primary"
+              href={`/projects/${project.slug}`}
+              onClick={() => {
+                // Stamp this slide into the "/" history entry so the browser
+                // Back button returns to THIS project, not the top of the page.
+                try {
+                  history.replaceState(history.state, "", `#${project.id}`);
+                } catch {}
+              }}
+            >
+              View project <span className="work__arrow">→</span>
+            </Link>
+            {project.links.map((l) => (
+              <a
+                key={l.label}
+                className="work__link"
+                href={l.href}
+                {...(l.external
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
+              >
+                {l.label} <span className="work__arrow">↗</span>
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </section>

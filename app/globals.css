@@ -112,10 +112,12 @@
   box-sizing: border-box;
 }
 
-/* native smooth scroll as the no-JS fallback; when Lenis is active it drives
-   scrolling itself and a competing scroll-behavior causes jank */
-html:not(.lenis):not(.paged) {
-  scroll-behavior: smooth;
+/* No global smooth scrolling: SectionScroll animates the pager itself, and a
+   CSS scroll-behavior: smooth underneath it turned instant landings (return
+   from a detail page, #hash on load) into slow glides that fought the pager.
+   In-page link animation on phones is requested explicitly in JS instead. */
+html {
+  scroll-behavior: auto;
 }
 
 body {
@@ -443,6 +445,189 @@ html.reveal-on .hero__img {
   letter-spacing: var(--track-label);
   text-transform: uppercase;
   color: var(--text-secondary);
+}
+
+/* =========================================================
+   DS: Slideshow (components/ds/Slideshow.tsx)
+   Auto-advancing sequence of real product screens, used wherever
+   ProjectMedia is `{ type: "slideshow" }` — fills the same well as a
+   still image or video (.frame__well / .project__well).
+   ========================================================= */
+
+.slideshow {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.slideshow__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  opacity: 0;
+  transition: opacity 700ms var(--ease-out, ease);
+}
+
+.slideshow__frame[data-active="true"] {
+  opacity: 1;
+}
+
+/* Prev/next — visible at a low baseline opacity (not hover-only, so
+   touch screens without a hover state can still find them), brighter on
+   hover/focus. Sit above the caption bar, vertically centered in the
+   well. */
+.slideshow__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-top: -14px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--white);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.2s var(--ease-out, ease), background 0.2s var(--ease-out, ease);
+}
+
+.slideshow:hover .slideshow__nav,
+.slideshow__nav:hover,
+.slideshow__nav:focus-visible {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.slideshow__nav--prev {
+  left: 8px;
+}
+
+.slideshow__nav--next {
+  right: 8px;
+}
+
+.slideshow__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 6px var(--space-4);
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.slideshow__caption {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--white);
+  line-height: 1.6;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.slideshow__counter {
+  flex: none;
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: var(--track-label);
+  color: var(--white);
+  line-height: 1.6;
+}
+
+/* Two fully independent slideshows shown side by side (e.g. TRIPTUNE's
+   mobile flow next to a handful of desktop/web shots) — each is its own
+   .frame__well with its own caption/counter bar, not one merged frame.
+   CSS Grid with fr columns matching each image's OWN true ratio (mobile
+   screenshots are 750×1526 ≈ 0.4914, desktop ones are 1440×900 = 1.6) —
+   so each cell's width comes out proportional to what that image
+   actually needs, and nothing gets stretched into the wrong shape and
+   cropped by object-fit: cover (an earlier flex-based version forced
+   both wells to the exact same height while one kept a fixed width,
+   which did exactly that — squeezed the taller box's image sideways).
+   The pair's own height then comes from its own width via aspect-ratio
+   (sum of the two ratios, ≈ 2.09), capped by the same viewport budget
+   .project__well uses on the main page — so it's the largest size that
+   fits without wrapping or cropping. That ends up a bit shorter than
+   TONEMATE/STRING TIME NEWS' single well (their 16/9 is narrower than
+   two images' combined 2.09), since this is two correctly-shaped boxes
+   sharing one row, not one box free to take the full ratio. */
+.project__visual-pair {
+  display: grid;
+  grid-template-columns: 0.4914fr 1.6fr;
+  column-gap: var(--space-5);
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 2.0914 / 1;
+  max-height: calc(100dvh - var(--header-h) - 220px);
+}
+
+.project__visual-pair .frame {
+  width: 100%;
+  height: 100%;
+}
+
+.project__visual-pair .project__well--portrait,
+.project__well--desktop-slide {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+/* Detail-page hero: .project__well there drops the viewport clamp and
+   sizes from the full content width instead (see .detail-hero__visual
+   .project__well below) — so give the pair that same width-driven
+   height instead of the main page's viewport budget. */
+.detail-hero__visual .project__visual-pair {
+  max-height: none;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .project__visual-pair {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    aspect-ratio: auto;
+    max-height: none;
+    height: auto;
+  }
+
+  /* Stacked, each well goes back to being sized from its own width by
+     its own aspect-ratio (no shared-height grid row to fill). */
+  .project__visual-pair .frame {
+    width: 100%;
+    height: auto;
+  }
+
+  .project__visual-pair .project__well--portrait {
+    width: 100%;
+    height: auto;
+    max-width: 320px;
+    margin-inline: auto;
+  }
+
+  .project__well--desktop-slide {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    margin-inline: auto;
+  }
 }
 
 /* =========================================================
@@ -882,7 +1067,9 @@ html.paged {
 }
 
 /* =========================================================
-   About
+   About (components/About.tsx) — one combined "01 — Introduction" section:
+   the stacked statement paired with the quote/body/meta column, sized to
+   match its height (see the fit() effect in the component).
    ========================================================= */
 
 .about__grid {
@@ -896,8 +1083,8 @@ html.paged {
 .about__heading {
   font-family: var(--font-text);
   /* base size for narrow screens; on two-column layouts About.tsx sets an
-     inline font-size so the four lines fill the height of the column beside
-     it (line-height must match HEADING_LINE_HEIGHT there) */
+     inline font-size so the four lines fill the height of the column
+     beside it (line-height must match HEADING_LINE_HEIGHT there) */
   font-size: 52px;
   line-height: 1.02;
   letter-spacing: -0.02em;
@@ -930,8 +1117,8 @@ html.paged {
 
 .about__body {
   font-family: var(--font-text);
-  font-size: var(--size-body);
-  line-height: 1.8;
+  font-size: 17px;
+  line-height: 1.85;
   color: var(--black);
 }
 
@@ -1008,6 +1195,25 @@ html.paged {
   border-bottom: var(--border-width) solid currentColor;
   padding-bottom: 2px;
   white-space: nowrap;
+}
+
+/* larger invisible hit area (touch) without moving the visible underline */
+.work__link {
+  position: relative;
+  transition: var(--transition-hover);
+}
+.work__link::before {
+  content: "";
+  position: absolute;
+  inset: -12px -8px;
+}
+
+.site-footer__disabled {
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  color: var(--paper-70);
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .work__link:hover {
@@ -1103,6 +1309,15 @@ html.paged {
   margin: 0;
 }
 
+.project__roles {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
 .project__subtitle {
   margin: var(--space-5) 0 0;
   font-family: var(--font-text);
@@ -1123,6 +1338,16 @@ html.paged {
 .project__well {
   aspect-ratio: 16 / 10;
   max-height: calc(100dvh - var(--header-h) - 220px);
+}
+
+/* phone-screenshot slideshows (e.g. TRIPTUNE, shot mobile-first) get a
+   portrait well sized to the real screenshot ratio instead of being
+   cropped/stretched into the default landscape one */
+.project__well--portrait {
+  aspect-ratio: 750 / 1526;
+  width: auto;
+  max-width: min(100%, 320px);
+  margin-inline: auto;
 }
 
 .project__video {
@@ -1308,4 +1533,395 @@ html.paged {
 
 .contact {
   margin-top: var(--space-11);
+}
+
+/* =========================================================
+   Stack (components/Stack.tsx)
+   ========================================================= */
+
+.stack__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-10) var(--space-8);
+  margin-top: var(--space-10);
+}
+
+.stack__group-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding-bottom: var(--space-4);
+  border-bottom: var(--border-width) solid var(--border-hairline);
+}
+
+.stack__items {
+  list-style: none;
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stack__items li {
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  color: var(--black);
+}
+
+/* =========================================================
+   Project Detail pages (app/projects/[slug]/page.tsx)
+   Normal vertical scroll — SectionScroll detaches itself off "/".
+   ========================================================= */
+
+.detail {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 0 var(--page-pad) var(--space-11);
+}
+
+.detail-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  height: var(--header-h);
+  flex-wrap: wrap;
+}
+
+.detail-nav__back {
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  padding-bottom: 2px;
+  border-bottom: var(--border-width) solid transparent;
+}
+
+.detail-nav__back:hover {
+  border-bottom-color: currentColor;
+}
+
+.detail-nav__links {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.detail-hero {
+  padding-top: var(--space-9);
+}
+
+.detail-hero__title {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 7vw, 108px);
+  line-height: 0.95;
+  letter-spacing: var(--track-display);
+  margin: var(--space-6) 0 0;
+}
+
+.detail-hero__subtitle {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-subhead);
+  color: var(--text-secondary);
+  max-width: 32ch;
+}
+
+.detail-hero__desc {
+  margin: var(--space-5) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.6;
+  max-width: 58ch;
+}
+
+.detail-hero__meta {
+  display: flex;
+  gap: var(--space-10);
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: var(--border-width) solid var(--border-hairline);
+  flex-wrap: wrap;
+}
+
+.detail-hero__visual {
+  margin-top: var(--space-10);
+}
+
+.detail-hero__visual .project__well {
+  max-height: none;
+  aspect-ratio: 16 / 9;
+}
+
+.detail-hero__visual .project__well--portrait {
+  aspect-ratio: 750 / 1526;
+  max-width: 340px;
+}
+
+/* Without this, the desktop-slide well inherits the generic 16/9 above
+   (same specificity, but that rule comes first) — the grid track-sizing
+   pass treats its width/height:100% as indefinite and falls back to the
+   declared aspect-ratio to size the column, so a wrong ratio here throws
+   off the whole grid, not just this box's own proportions. Its real
+   screenshots are 1440×900, so give it that true ratio instead. */
+.detail-hero__visual .project__well--desktop-slide {
+  aspect-ratio: 16 / 10;
+}
+
+.detail-body {
+  margin-top: var(--space-11);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-11);
+  max-width: 920px;
+}
+
+.detail-section__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 3vw, 36px);
+  letter-spacing: var(--track-display);
+  font-weight: 400;
+}
+
+.detail-section__text {
+  margin: var(--space-5) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.7;
+  max-width: 72ch;
+  color: var(--black);
+}
+
+.detail-bullets {
+  list-style: none;
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.detail-bullets li {
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  color: var(--black);
+  padding-left: var(--space-5);
+  position: relative;
+}
+
+.detail-bullets li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--text-secondary);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-8);
+  margin-top: var(--space-6);
+}
+
+.detail-grid__item {
+  padding-top: var(--space-5);
+  border-top: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-grid__item-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+.detail-grid__item-body {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.detail-stack {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-6);
+}
+
+.detail-stack__item {
+  padding: var(--space-5) 0;
+  border-top: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-stack__item-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  font-weight: 500;
+}
+
+.detail-stack__item-body {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.55;
+  color: var(--text-secondary);
+  max-width: 64ch;
+}
+
+.detail-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.detail-flow__step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.detail-flow__step span:first-child {
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  padding: var(--space-3) var(--space-5);
+  border: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-flow__arrow {
+  color: var(--text-secondary);
+}
+
+.detail-flow__caption {
+  margin: var(--space-5) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  color: var(--text-secondary);
+}
+
+.detail-stats {
+  display: flex;
+  gap: var(--space-10);
+  margin-top: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.detail-stats__caption {
+  margin: var(--space-5) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  color: var(--text-secondary);
+  max-width: 54ch;
+}
+
+@media (max-width: 600px) {
+  .detail-hero__meta {
+    gap: var(--space-6);
+  }
+
+  .detail-body {
+    gap: var(--space-10);
+  }
+}
+
+/* ---- case-study key points + grouped contribution ---- */
+.detail-insight {
+  list-style: none;
+  margin: var(--space-6) 0 0;
+  padding: 0;
+}
+
+.detail-insight__item {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: var(--space-6);
+  padding: var(--space-6) 0;
+  border-top: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-insight__item:last-child {
+  border-bottom: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-insight__label {
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--accent-mark);
+  padding-top: 8px;
+}
+
+.detail-insight__heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.4vw, 30px);
+  letter-spacing: var(--track-display);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.detail-insight__body {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.55;
+  color: var(--text-secondary);
+  max-width: 64ch;
+}
+
+.detail-contrib {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-8) var(--space-8);
+  margin-top: var(--space-6);
+}
+
+.detail-contrib__group {
+  padding-top: var(--space-5);
+  border-top: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-contrib__label {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--accent-mark);
+}
+
+.detail-contrib__list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.detail-contrib__list li {
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.5;
+  color: var(--black);
+}
+
+@media (max-width: 600px) {
+  .detail-insight__item {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+  .detail-insight__label {
+    padding-top: 0;
+  }
 }
