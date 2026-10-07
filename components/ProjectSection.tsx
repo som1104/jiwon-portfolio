@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import ImageFrame from "@/components/ds/ImageFrame";
 import Slideshow from "@/components/ds/Slideshow";
-import type { Project } from "@/components/data";
+import { projectDetails, type Project } from "@/components/data";
 
 type ProjectSectionProps = {
   project: Project;
@@ -31,6 +31,13 @@ export default function ProjectSection({
 }: ProjectSectionProps) {
   const counter = `${String(position).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  // short Problem / Solution / Role-style facts, reused from the detail page's "At a Glance"
+  const insight = projectDetails[project.slug]?.sections.find((s) => s.kind === "insight");
+  const facts =
+    project.facts ??
+    (insight && insight.kind === "insight"
+      ? insight.items.slice(0, 3).map((f) => ({ label: f.label, value: f.heading }))
+      : []);
 
   // The main page is a single continuous scroll — every project's media is
   // mounted at once, not just the one currently in view. Without this, two
@@ -70,7 +77,10 @@ export default function ProjectSection({
         </div>
 
         <div className="project__title-group">
-          <h2 className="project__title" id={`${project.id}-title`}>
+          <h2
+            className={`project__title${project.title.length > 12 ? " project__title--long" : ""}`}
+            id={`${project.id}-title`}
+          >
             {project.title}
           </h2>
           <p className="project__subtitle">{project.subtitle}</p>
@@ -89,6 +99,11 @@ export default function ProjectSection({
                 <video
                   ref={videoRef}
                   className="project__video"
+                  style={
+                    project.media.zoom
+                      ? { transform: `scale(${project.media.zoom})`, transformOrigin: "50% 0%" }
+                      : undefined
+                  }
                   src={project.media.src}
                   poster={project.media.poster}
                   aria-label={`${project.title} 프리뷰 영상`}
@@ -158,7 +173,10 @@ export default function ProjectSection({
         </div>
 
         <div className="project__meta">
-          <p className="project__summary">
+          <p
+            className="project__summary"
+            style={project.summaryWidth ? { maxWidth: project.summaryWidth } : undefined}
+          >
             {project.description.map((line, i) => (
               <span key={line}>
                 {line}
@@ -166,6 +184,16 @@ export default function ProjectSection({
               </span>
             ))}
           </p>
+          {facts.length ? (
+            <dl className="project__facts">
+              {facts.map((f) => (
+                <div key={f.label} className="project__fact">
+                  <dt>{f.label}</dt>
+                  <dd>{f.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
           <p className="project__stack">{project.stack}</p>
           <div className="project__links">
             <Link

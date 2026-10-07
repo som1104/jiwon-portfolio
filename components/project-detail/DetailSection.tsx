@@ -1,3 +1,4 @@
+import FrameSlides from "./FrameSlides";
 import type { DetailSection as DetailSectionType } from "@/components/data";
 
 /**
@@ -7,6 +8,199 @@ import type { DetailSection as DetailSectionType } from "@/components/data";
  */
 export default function DetailSection({ section }: { section: DetailSectionType }) {
   switch (section.kind) {
+    case "showcase":
+      return (
+        <section className="detail-section detail-section--wide" data-reveal>
+          <h2 className="detail-section__title">{section.title}</h2>
+          {section.intro ? <p className="detail-section__lede">{section.intro}</p> : null}
+          <div className="detail-show">
+            {section.rows.map((row) => (
+              <article
+                key={row.label}
+                className={`detail-show__row detail-show__row--${row.layout}${
+                  row.images[0] && row.images[0].w > row.images[0].h ? " detail-show__row--landscape" : ""
+                }${row.tight ? " detail-show__row--tight" : ""}`}
+              >
+                <div
+                  className={`detail-show__media${
+                    row.images.length > 1 ? " detail-show__media--multi" : ""
+                  }`}
+                >
+                  {row.slides?.length ? (
+                    <FrameSlides slides={row.slides} interval={row.slideInterval} />
+                  ) : (
+                    <>
+                    {row.images.map((img) => (
+                      <figure
+                        className="detail-shot"
+                        key={img.src}
+                        style={{ maxWidth: img.w }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={img.src}
+                          alt={img.alt}
+                          width={img.w}
+                          height={img.h}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </figure>
+                    ))}
+                    </>
+                  )}
+                </div>
+                <div className="detail-show__text">
+                  <p className="detail-show__label">{row.label}</p>
+                  <h3 className="detail-show__title">{row.title}</h3>
+                  {row.lead ? <p className="detail-show__lead">{row.lead}</p> : null}
+                  {row.contribution?.length ? (
+                    <div className="detail-show__contrib">
+                      <p className="detail-show__k">My Contribution</p>
+                      <ul>
+                        {row.contribution.map((c) => (
+                          <li key={c}>{c}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {row.blocks?.length ? (
+                    <dl className="detail-show__blocks">
+                      {row.blocks.map((b) => (
+                        <div key={b.k}>
+                          <dt className="detail-show__k">{b.k}</dt>
+                          <dd>{b.v}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      );
+
+    case "screens":
+      return (
+        <section className="detail-section detail-section--wide" data-reveal>
+          <h2 className="detail-section__title">{section.title}</h2>
+          <div className="detail-flow">
+            {section.steps.map((step, i) => (
+              <div className="detail-flow__step" key={step}>
+                <span>{step}</span>
+                {i < section.steps.length - 1 ? (
+                  <span className="detail-flow__arrow" aria-hidden="true">
+                    →
+                  </span>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          {section.note ? <p className="detail-flow__caption">{section.note}</p> : null}
+          <ol className="detail-screens">
+            {section.items.map((item, i) => (
+              <li className="detail-screens__item" key={item.src}>
+                <figure className="detail-shot detail-shot--phone">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.src}
+                    alt={`${item.title} 화면`}
+                    width={item.w}
+                    height={item.h}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </figure>
+                <p className="detail-screens__stage">
+                  <span>{String(i + 1).padStart(2, "0")}</span> {item.stage}
+                </p>
+                <p className="detail-screens__title">{item.title}</p>
+                <p className="detail-screens__note">{item.note}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      );
+
+    case "gallery":
+      return (
+        <section className="detail-section detail-section--wide" data-reveal>
+          <h2 className="detail-section__title detail-section__title--sub">{section.title}</h2>
+          {section.note ? <p className="detail-flow__caption">{section.note}</p> : null}
+          <ul className="detail-gallery">
+            {section.items.map((item) => (
+              <li key={item.src}>
+                <figure className="detail-shot detail-shot--phone">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.src}
+                    alt={item.caption}
+                    width={section.w}
+                    height={section.h}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </figure>
+                <p>{item.caption}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+
+    case "fixes":
+      return (
+        <section className="detail-section detail-section--wide" data-reveal>
+          <h2 className="detail-section__title">{section.title}</h2>
+          {section.note ? <p className="detail-section__lede">{section.note}</p> : null}
+          <div className="detail-fixes">
+            <div className="detail-fixes__media">
+              {section.images.map((img) => (
+                <figure className="detail-shot detail-shot--phone" key={img.src}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    width={img.w}
+                    height={img.h}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </figure>
+              ))}
+            </div>
+            <ol className="detail-fixes__list">
+              {section.items.map((item, i) => (
+                <li key={item.problem}>
+                  <p className="detail-show__k">
+                    Problem {String(i + 1).padStart(2, "0")}
+                  </p>
+                  <p className="detail-fixes__problem">{item.problem}</p>
+                  <p className="detail-show__k detail-fixes__fixk">Fix</p>
+                  <p className="detail-fixes__fix">{item.fix}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      );
+
+    case "result":
+      return (
+        <section className="detail-section" data-reveal>
+          <h2 className="detail-section__title">{section.title}</h2>
+          <ol className="detail-result">
+            {section.items.map((item, i) => (
+              <li key={item} className="detail-result__item">
+                <span className="detail-insight__label">{String(i + 1).padStart(2, "0")}</span>
+                <p>{item}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      );
+
     case "insight":
       return (
         <section className="detail-section detail-section--insight" data-reveal>
@@ -27,7 +221,10 @@ export default function DetailSection({ section }: { section: DetailSectionType 
 
     case "contribution":
       return (
-        <section className="detail-section" data-reveal>
+        <section
+          className={`detail-section${section.groups.length === 4 ? " detail-section--wide" : ""}`}
+          data-reveal
+        >
           <h2 className="detail-section__title">{section.title}</h2>
           <div className="detail-contrib">
             {section.groups.map((group) => (
@@ -66,7 +263,10 @@ export default function DetailSection({ section }: { section: DetailSectionType 
 
     case "grid":
       return (
-        <section className="detail-section" data-reveal>
+        <section
+          className={`detail-section${section.items.length === 4 ? " detail-section--row4" : ""}`}
+          data-reveal
+        >
           <h2 className="detail-section__title">{section.title}</h2>
           <div className="detail-grid">
             {section.items.map((item) => (

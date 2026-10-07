@@ -9,7 +9,7 @@ type SlideshowProps = {
   /** ms per frame */
   interval?: number;
   /**
-   * Prev/next arrows + the caption/counter bar. On by default (the detail
+   * Prev/next arrows (no caption/counter bar overlay). On by default (the detail
    * pages' quick-scan intro wells). The main page's Selected Work slides
    * pass false — it's a glance, not a place to linger and click through —
    * so there it's just the crossfade with nothing overlaid.
@@ -96,19 +96,6 @@ export default function Slideshow({
             ›
           </button>
         </>
-      ) : null}
-      {controls ? (
-        <div className="slideshow__bar">
-          {captions?.[index] ? (
-            <p className="slideshow__caption">{captions[index]}</p>
-          ) : (
-            <span />
-          )}
-          <span className="slideshow__counter" aria-hidden="true">
-            {String(index + 1).padStart(2, "0")} /{" "}
-            {String(images.length).padStart(2, "0")}
-          </span>
-        </div>
       ) : null}
     </div>
   );

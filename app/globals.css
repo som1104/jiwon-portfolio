@@ -419,6 +419,11 @@ html.reveal-on .hero__img {
   aspect-ratio: 4 / 5;
 }
 
+/* slideshow wells get the same hairline outline as the detail-page screen cards */
+.frame__well:has(> .slideshow) {
+  border: var(--border-width) solid var(--border-hairline);
+}
+
 .frame__img {
   width: 100%;
   height: 100%;
@@ -568,7 +573,7 @@ html.reveal-on .hero__img {
    sharing one row, not one box free to take the full ratio. */
 .project__visual-pair {
   display: grid;
-  grid-template-columns: 0.4914fr 1.6fr;
+  grid-template-columns: minmax(0, 0.4914fr) minmax(0, 1.6fr);
   column-gap: var(--space-5);
   align-items: stretch;
   justify-content: center;
@@ -1007,12 +1012,14 @@ html.paged {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-6);
-  padding: var(--space-11) var(--page-pad) var(--space-10);
+  gap: 0;
+  /* lift the whole group off the bottom edge so it sits in the lower-left
+     third rather than jammed into the corner */
+  padding: var(--space-11) var(--page-pad) clamp(88px, 15vh, 168px);
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.42),
-    rgba(0, 0, 0, 0.12) 55%,
+    rgba(0, 0, 0, 0.5),
+    rgba(0, 0, 0, 0.2) 50%,
     rgba(0, 0, 0, 0) 100%
   );
 }
@@ -1021,8 +1028,8 @@ html.paged {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(36px, 4.4vw, 64px);
-  line-height: 1.02;
+  font-size: clamp(40px, 5.1vw, 80px);
+  line-height: 1.1;
   letter-spacing: var(--track-display);
   text-transform: lowercase;
   color: var(--white);
@@ -1030,17 +1037,26 @@ html.paged {
 }
 
 .hero-expand__desc {
-  margin: 0;
+  margin: var(--space-5) 0 0;
   font-family: var(--font-text);
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.82);
+  font-size: 15.5px;
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.32);
   /* line breaks are set in data.ts; only fold further on very narrow screens */
   max-width: 100%;
 }
 
+/* CTA sits clearly apart from the text block */
 .hero-expand__content .btn {
-  margin-top: var(--space-2);
+  margin-top: var(--space-9);
+}
+
+/* nav links: a touch brighter/heavier so they read over the sky */
+.hero__header .site-header__link {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
 }
 
 @media (max-width: 600px) {
@@ -1053,16 +1069,20 @@ html.paged {
   }
 
   .hero-expand__content {
-    padding: var(--space-10) var(--space-5) var(--space-8);
-    gap: var(--space-5);
+    padding: var(--space-10) var(--space-5) clamp(64px, 12vh, 104px);
   }
 
   .hero-expand__statement {
-    font-size: clamp(30px, 8.5vw, 36px);
+    font-size: clamp(33px, 9.4vw, 40px);
   }
 
   .hero-expand__desc {
-    font-size: 13px;
+    margin-top: var(--space-4);
+    font-size: 14px;
+  }
+
+  .hero-expand__content .btn {
+    margin-top: var(--space-8);
   }
 }
 
@@ -1272,11 +1292,25 @@ html.paged {
 }
 
 .project__inner {
+  /* the whole showcase layout is scaled up as one piece (type, gaps, media),
+     so the margins around it shrink; it steps back down on short or narrow screens */
+  /* --pz = how much this block is scaled; text sizes divide it back out so
+     type stays the same size as the rest of the page while layout, media and
+     spacing grow */
+  --pz: 1;
+  --size-subhead: calc(19px / var(--pz));
+  --size-body: calc(16px / var(--pz));
+  --size-caption: calc(12px / var(--pz));
   width: 100%;
   max-width: var(--page-max);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  /* title and media share the same top line on every project, and the
+     links line sits on the media's bottom line: the description column
+     (.project__meta) takes whatever height is left and absorbs it in the
+     gap above the facts list */
+  grid-template-rows: auto auto 1fr;
   grid-template-areas:
     "head head"
     "title visual"
@@ -1299,14 +1333,24 @@ html.paged {
 
 .project__title-group {
   grid-area: title;
+  container-type: inline-size;
 }
 
 .project__title {
   font-family: var(--font-display);
-  font-size: clamp(44px, 5.2vw, 84px);
+  font-size: calc(clamp(44px, 5.2vw, 84px) / var(--pz));
   line-height: 0.95;
   letter-spacing: var(--track-display);
   margin: 0;
+  /* trim the empty space above the capitals so the top of the letters sits on the same line as the top of the media */
+  text-box-trim: trim-start;
+  text-box-edge: cap alphabetic;
+}
+
+/* long names (STRING TIME NEWS) stay on one line: the size follows the column width */
+.project__title--long {
+  white-space: nowrap;
+  font-size: min(calc(clamp(44px, 5.2vw, 84px) / var(--pz)), 10.4cqw);
 }
 
 .project__roles {
@@ -1330,7 +1374,7 @@ html.paged {
 
 .project__visual {
   grid-area: visual;
-  align-self: center;
+  align-self: start;
   min-width: 0;
 }
 
@@ -1359,11 +1403,14 @@ html.paged {
 
 .project__meta {
   grid-area: meta;
-  align-self: end;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  margin-top: calc(-1 * var(--space-3));
 }
 
 .project__summary {
-  margin: 0;
+  margin: 0 0 var(--space-4);
   font-family: var(--font-text);
   font-size: var(--size-body);
   line-height: 1.55;
@@ -1371,10 +1418,61 @@ html.paged {
   text-wrap: pretty;
 }
 
+.project__facts {
+  /* the flexible gap sits here: between the description block above and the facts/links block below */
+  margin: auto 0 0;
+  max-width: 46ch;
+  border-top: var(--border-width) solid var(--border-hairline);
+}
+
+.project__fact {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: var(--space-3) 0;
+  border-bottom: var(--border-width) solid var(--border-hairline);
+}
+
+.project__inner .work__link {
+  font-size: calc(13px / var(--pz));
+}
+
+.project__fact dt {
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: 0.19em;
+  text-transform: uppercase;
+  color: var(--accent-mark);
+}
+
+.project__fact dd {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: calc(14px / var(--pz));
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+  color: var(--black);
+}
+
+/* wider tracking where the left column has room for it */
+@media (min-width: 1366px) {
+  .project__fact {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .project__fact dt {
+    letter-spacing: 0.22em;
+  }
+  .project__fact dd {
+    letter-spacing: 0.02em;
+  }
+}
+
 .project__stack {
   margin: var(--space-6) 0 0;
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: calc(13px / var(--pz));
   color: var(--text-secondary);
 }
 
@@ -1400,9 +1498,39 @@ html.paged {
   color: var(--text-secondary);
 }
 
+/* shorter media on narrower screens: tighten the facts list so the links line still lands on the media's bottom edge */
+@media (min-width: 901px) and (max-width: 1500px) {
+  .project__fact {
+    padding: var(--space-2) 0;
+  }
+}
+
+/* the scale-up only kicks in where the media can grow with it, so the links
+   line keeps landing on the media's bottom edge */
+@media (min-width: 1600px) and (min-height: 900px) {
+  .project__inner {
+    zoom: 1.12;
+    --pz: 1.12;
+  }
+
+  .project__fact {
+    padding: var(--space-2) 0;
+  }
+}
+
+@media (min-width: 1800px) and (min-height: 980px) {
+  .project__inner {
+    zoom: 1.25;
+    --pz: 1.25;
+  }
+}
+
 @media (max-width: 900px) {
   .project__inner {
+    zoom: 1;
+    --pz: 1;
     grid-template-columns: 1fr;
+    grid-template-rows: none;
     grid-template-areas:
       "head"
       "title"
@@ -1417,6 +1545,11 @@ html.paged {
 
   .project__meta {
     align-self: start;
+    margin-top: 0;
+  }
+
+  .project__facts {
+    margin-top: var(--space-8);
   }
 }
 
@@ -1667,16 +1800,34 @@ html.paged {
    declared aspect-ratio to size the column, so a wrong ratio here throws
    off the whole grid, not just this box's own proportions. Its real
    screenshots are 1440×900, so give it that true ratio instead. */
+/* In the TRIPTUNE pair the phone well must follow its grid column exactly.
+   The 340px cap above (meant for a lone phone well) squeezed it narrower
+   than the column on wide screens, so object-fit: cover trimmed the sides. */
+.detail-hero__visual .project__visual-pair .project__well--portrait {
+  max-width: none;
+  width: 100%;
+  height: 100%;
+}
+
 .detail-hero__visual .project__well--desktop-slide {
   aspect-ratio: 16 / 10;
 }
 
 .detail-body {
-  margin-top: var(--space-11);
+  margin-top: var(--space-10);
   display: flex;
   flex-direction: column;
-  gap: var(--space-11);
+  gap: var(--space-10);
+}
+
+/* text-led sections keep a readable measure; screenshot sections go wide */
+.detail-body > .detail-section {
   max-width: 920px;
+  width: 100%;
+}
+
+.detail-body > .detail-section--wide {
+  max-width: none;
 }
 
 .detail-section__title {
@@ -1725,6 +1876,18 @@ html.paged {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: var(--space-8);
   margin-top: var(--space-6);
+}
+
+.detail-body > .detail-section--row4 {
+  max-width: 1240px;
+}
+
+/* exactly four items sit on one row instead of wrapping 3 + 1 */
+@media (min-width: 1000px) {
+  .detail-section--row4 .detail-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
 }
 
 .detail-grid__item {
@@ -1863,9 +2026,9 @@ html.paged {
 
 .detail-insight__heading {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-text);
   font-size: clamp(22px, 2.4vw, 30px);
-  letter-spacing: var(--track-display);
+  letter-spacing: -0.01em;
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
@@ -1882,8 +2045,15 @@ html.paged {
 .detail-contrib {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: var(--space-8) var(--space-8);
+  gap: var(--space-8) var(--space-6);
   margin-top: var(--space-6);
+}
+
+/* four groups sit on a single row on wide screens */
+@media (min-width: 1000px) {
+  .detail-contrib:has(> :nth-child(4):last-child) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .detail-contrib__group {
@@ -1902,18 +2072,35 @@ html.paged {
 
 .detail-contrib__list {
   list-style: none;
-  margin: var(--space-3) 0 0;
+  margin: var(--space-4) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
+/* each item gets a small marker + hanging indent so separate points read as separate */
 .detail-contrib__list li {
+  position: relative;
+  padding-left: 14px;
+  padding-right: var(--space-6);
   font-family: var(--font-text);
   font-size: var(--size-body);
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--black);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+.detail-contrib__list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.78em;
+  width: 5px;
+  height: 1px;
+  background: var(--accent-mark);
 }
 
 @media (max-width: 600px) {
@@ -1925,3 +2112,441 @@ html.paged {
     padding-top: 0;
   }
 }
+
+/* ---- case-study visual evidence: showcase rows, screens, gallery, fixes, result ---- */
+.detail-section__title--sub {
+  font-size: clamp(20px, 2.2vw, 26px);
+  color: var(--text-secondary);
+}
+
+.detail-section__lede {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  color: var(--text-secondary);
+}
+
+.detail-shot {
+  margin: 0;
+  background: var(--bg-media);
+  border: var(--border-width) solid var(--border-hairline);
+  line-height: 0;
+}
+
+.detail-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.frame-slides { width: 100%; margin-inline: auto; }
+.frame-slides__stage { position: relative; width: 100%; background: var(--bg-media); border: var(--border-width) solid var(--border-hairline); overflow: hidden; }
+.frame-slides__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; z-index: 0; }
+/* previous frame stays fully opaque underneath while the next fades in on top, so there is never a dip to the grey background */
+.frame-slides__img.is-prev { opacity: 1; z-index: 1; }
+.frame-slides__img.is-active { opacity: 1; z-index: 2; animation: frame-slides-in 0.18s ease-out; }
+@keyframes frame-slides-in { from { opacity: 0; } to { opacity: 1; } }
+.frame-slides__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-top: var(--space-3); }
+.frame-slides__caption { margin: 0; font-family: var(--font-text); font-size: 14px; color: var(--text-secondary); min-width: 0; }
+.frame-slides__dots { display: flex; gap: 8px; flex: none; }
+.frame-slides__dot { width: 8px; height: 8px; padding: 0; border-radius: 50%; border: 0; background: var(--border-hairline); cursor: pointer; }
+.frame-slides__dot.is-active { background: var(--text-primary); }
+@media (prefers-reduced-motion: reduce) { .frame-slides__img.is-active { animation: none; } }
+
+.detail-show {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  margin-top: var(--space-6);
+}
+
+.detail-show__row {
+  padding-top: var(--space-5);
+  border-top: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-show__label,
+.detail-show__k {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--accent-mark);
+}
+
+.detail-show__title {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(22px, 2.4vw, 30px);
+  letter-spacing: var(--track-display);
+  line-height: 1.2;
+}
+
+.detail-show__lead {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.55;
+  color: var(--text-secondary);
+  max-width: 52ch;
+}
+
+/* wide screenshot on top, three short blocks underneath */
+.detail-show__row--stack .detail-show__text {
+  margin-top: var(--space-6);
+}
+
+.detail-show__row--stack .detail-show__title {
+  margin-bottom: var(--space-6);
+}
+
+.detail-show__row--stack .detail-show__media {
+  margin-top: var(--space-5);
+}
+
+.detail-show__row--stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-show__row--stack .detail-show__text {
+  display: contents;
+}
+
+.detail-show__row--stack .detail-show__label {
+  order: 0;
+}
+
+.detail-show__row--stack .detail-show__title {
+  order: 1;
+}
+
+.detail-show__row--stack .detail-show__media {
+  order: 2;
+  margin-top: 0;
+}
+
+.detail-show__row--stack .detail-show__blocks {
+  order: 3;
+}
+
+.detail-show__blocks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+  margin: var(--space-6) 0 0;
+}
+
+.detail-show__blocks dd {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.5;
+}
+
+.detail-show__blocks dt {
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--border-hairline);
+}
+
+/* screenshot on the left, text on the right — vertically centred, not sticky */
+.detail-show__row--side {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: clamp(40px, 6vw, 96px);
+  align-items: center;
+}
+
+.detail-show__row--side.detail-show__row--landscape {
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+}
+
+/* STN key screens: cropped tight (about 10% larger, narrower side margins) at the same height */
+@media (min-width: 901px) {
+  .detail-show__row--side.detail-show__row--tight {
+    grid-template-columns: minmax(0, 0.93fr) minmax(0, 1fr);
+  }
+}
+
+.detail-show__row--side .detail-show__media {
+  grid-row: 1;
+  min-width: 0;
+}
+
+.detail-show__row--side .detail-shot {
+  width: 100%;
+  margin-inline: auto;
+}
+
+.detail-show__row--side .detail-show__text {
+  max-width: 60ch;
+  padding-right: clamp(0px, 3vw, 48px);
+}
+
+.detail-show__row--side .detail-show__blocks {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+}
+
+.detail-show__contrib {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-show__contrib ul {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.detail-show__contrib li {
+  position: relative;
+  padding-left: var(--space-5);
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.5;
+}
+
+.detail-show__contrib li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--text-secondary);
+}
+
+/* TRIPTUNE representative phone screens */
+.detail-screens {
+  list-style: none;
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-8) var(--space-6);
+}
+
+.detail-screens__stage {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-caption);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--accent-mark);
+}
+
+.detail-screens__stage span {
+  color: var(--text-secondary);
+  margin-right: var(--space-2);
+}
+
+.detail-screens__title {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.detail-screens__note {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.detail-gallery {
+  list-style: none;
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: var(--space-5) var(--space-4);
+}
+
+@media (max-width: 1000px) {
+  .detail-gallery {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.detail-gallery p {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-text);
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+/* Problem → Fix beside mobile screenshots */
+.detail-fixes {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+  gap: clamp(40px, 6vw, 96px);
+  margin-top: var(--space-6);
+  align-items: center;
+}
+
+.detail-fixes__media {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+  max-width: 460px;
+}
+
+/* three phone shots: keep each phone the same size as in the two-up layout */
+@media (min-width: 901px) {
+  .detail-fixes__media:has(> :nth-child(3)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 690px;
+  }
+}
+
+.detail-fixes__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.detail-fixes__list li {
+  padding: var(--space-5) 0;
+  border-top: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-fixes__list li:last-child {
+  border-bottom: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-fixes__problem {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2vw, 26px);
+  line-height: 1.25;
+  letter-spacing: var(--track-display);
+}
+
+.detail-fixes__fixk {
+  margin-top: var(--space-4);
+}
+
+.detail-fixes__fix {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* Result */
+.detail-result {
+  list-style: none;
+  margin: var(--space-6) 0 0;
+  padding: 0;
+}
+
+.detail-result__item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: var(--space-4);
+  padding: var(--space-5) 0;
+  border-top: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-result__item:last-child {
+  border-bottom: var(--border-width) solid var(--border-hairline);
+}
+
+.detail-result__item .detail-insight__label {
+  padding-top: 6px;
+}
+
+.detail-result__item p {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 1100px) {
+  .detail-screens {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .detail-show__row--side,
+  .detail-fixes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+  .detail-show__row--side,
+  .detail-show__row--side.detail-show__row--landscape {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .detail-show__row--side .detail-show__media {
+    grid-row: auto;
+    max-width: 560px;
+  }
+  .detail-show__row--side.detail-show__row--landscape .detail-show__media {
+    max-width: none;
+  }
+  .detail-fixes__media {
+    max-width: 520px;
+  }
+  .detail-show__blocks {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+  }
+  .detail-screens {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .detail-result__item {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+  .detail-show {
+    gap: var(--space-9);
+  }
+  /* phone screens: swipeable row instead of a long stack */
+  .detail-screens {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: var(--space-5);
+    margin-inline: calc(var(--page-pad) * -1);
+    padding-inline: var(--page-pad);
+    padding-bottom: var(--space-3);
+    -webkit-overflow-scrolling: touch;
+  }
+  .detail-screens__item {
+    flex: 0 0 62%;
+    scroll-snap-align: start;
+  }
+  .detail-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  }
+}
+
+/* ── 한 단어만 다음 줄로 넘어가는 줄바꿈(고아 단어) 방지 ───────────── */
+.detail-hero__subtitle { max-width: none; }
+.detail-hero p,
+.detail-section p,
+.detail-section li,
+.detail-section dd,
+.detail-section figcaption,
+.project__summary span,
+.project__fact dd,
+.detail-hero__title { text-wrap: balance; }
+.detail-section .detail-stack__item-body,
+.detail-section .detail-stats__caption { text-wrap: pretty; }
+.detail-show__title,
+.detail-show__lead,
+.frame-slides__caption,
+.detail-screens__title { text-wrap: balance; }
