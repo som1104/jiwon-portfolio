@@ -15,6 +15,13 @@ type SlideshowProps = {
    * so there it's just the crossfade with nothing overlaid.
    */
   controls?: boolean;
+  /**
+   * Controlled mode: a parent (SlideshowPair) owns the frame index and the
+   * timer, so several slideshows can stay on the same step. The arrows then
+   * report through `onIndexChange` instead of moving this one alone.
+   */
+  activeIndex?: number;
+  onIndexChange?: (next: number) => void;
 };
 
 /**
@@ -34,8 +41,12 @@ export default function Slideshow({
   captions,
   interval = 2600,
   controls = true,
+  activeIndex,
+  onIndexChange,
 }: SlideshowProps) {
-  const [index, setIndex] = useState(0);
+  const controlled = activeIndex !== undefined;
+  const [innerIndex, setIndex] = useState(0);
+  const index = controlled ? activeIndex : innerIndex;
   const [paused, setPaused] = useState(false);
   const reducedRef = useRef(false);
 
@@ -46,17 +57,19 @@ export default function Slideshow({
   }, []);
 
   useEffect(() => {
-    if (images.length < 2 || paused || reducedRef.current) return;
+    if (controlled || images.length < 2 || paused || reducedRef.current) return;
     const id = window.setInterval(() => {
       setIndex((i) => (i + 1) % images.length);
     }, interval);
     return () => window.clearInterval(id);
-  }, [images.length, interval, paused, index]);
+  }, [controlled, images.length, interval, paused, index]);
 
   if (images.length === 0) return null;
 
   const goTo = (next: number) => {
-    setIndex(((next % images.length) + images.length) % images.length);
+    const wrapped = ((next % images.length) + images.length) % images.length;
+    if (controlled) onIndexChange?.(wrapped);
+    else setIndex(wrapped);
   };
 
   return (

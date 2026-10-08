@@ -124,6 +124,9 @@ const ScrollExpandMedia = ({
     const unregister = heroControl.register({
       expand: () => animateTo(1, reduced ? 0 : EXPAND_MS, easeOutCubic),
       collapse: () => animateTo(0, reduced ? 0 : COLLAPSE_MS, easeInOutCubic),
+      open: () => {
+        void animateTo(1, 0, easeOutCubic);
+      },
       isExpanded: () => progressRef.current >= 1,
       isAnimating: () => animatingRef.current,
     });

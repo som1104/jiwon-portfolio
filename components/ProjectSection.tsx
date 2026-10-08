@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import ImageFrame from "@/components/ds/ImageFrame";
 import Slideshow from "@/components/ds/Slideshow";
+import SlideshowPair from "@/components/ds/SlideshowPair";
 import { projectDetails, type Project } from "@/components/data";
 
 type ProjectSectionProps = {
@@ -122,31 +123,14 @@ export default function ProjectSection({
             />
           ) : project.media?.type === "slideshow" ? (
             project.media.secondaryImages?.length ? (
-              <div className="project__visual-pair">
-                <figure className="frame">
-                  <div
-                    className={`frame__well project__well${
-                      project.media.orientation === "portrait" ? " project__well--portrait" : ""
-                    }`}
-                  >
-                    <Slideshow
-                      images={project.media.images}
-                      captions={project.media.captions}
-                      alt={project.title}
-                      controls={false}
-                    />
-                  </div>
-                </figure>
-                <figure className="frame">
-                  <div className="frame__well project__well project__well--desktop-slide">
-                    <Slideshow
-                      images={project.media.secondaryImages}
-                      alt={`${project.title} 웹 버전`}
-                      controls={false}
-                    />
-                  </div>
-                </figure>
-              </div>
+              <SlideshowPair
+                images={project.media.images}
+                captions={project.media.captions}
+                secondaryImages={project.media.secondaryImages}
+                alt={project.title}
+                portrait={project.media.orientation === "portrait"}
+                controls={false}
+              />
             ) : (
               <figure className="frame">
                 <div

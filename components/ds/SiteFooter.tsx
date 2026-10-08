@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Label from "./Label";
 import TextLink from "./TextLink";
 
@@ -45,6 +46,15 @@ export default function SiteFooter({
                   >
                     {link.label} (준비 중)
                   </span>
+                ) : link.href.startsWith("/") ? (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    scroll={false}
+                    className="textlink textlink--inverse textlink--plain"
+                  >
+                    {link.label}
+                  </Link>
                 ) : (
                 <TextLink
                   key={link.label}

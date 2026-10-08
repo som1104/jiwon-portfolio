@@ -46,7 +46,7 @@ export const about = {
   // column beside it, so the line breaks are fixed here, not by width
   heading: ["I bring a visual", "perspective", "to the interfaces", "people use."],
   quote: ["콘텐츠를 만드는 사람에서 사용자가", "직접 경험하는 화면을 만드는 사람으로"],
-  body: "서양화를 전공하고 약 4년간 웹툰 제작 환경에서 연출과 후보정 업무를 담당했습니다. 콘텐츠의 색감과 분위기, 화면의 구성과 완성도를 고민해 온 경험을 바탕으로 현재 프론트엔드 개발을 공부하고 있습니다. 시각적인 결과물을 만드는 것을 넘어 사용자가 직접 경험하는 인터페이스를 설계하고 구현하는 것을 목표로 합니다.",
+  body: "서양화를 전공하고 약 4년간 웹툰 연출과 후보정 업무를 담당하며 색감과 화면 구성에 대한 감각을 쌓았습니다. 이를 바탕으로 사용자가 이해하기 쉬운 화면과 흐름을 설계하고, 프론트엔드로 구현하고 있습니다.",
   meta: [
     { k: "Background", v: "서양화 전공" },
     { k: "Experience", v: "웹툰 연출 / 후보정 4년" },
@@ -142,6 +142,12 @@ export const triptuneDesktopImages = [1, 6, 12, 18, 24].map(
   (n) => `/images/triptune/triptune-${String(n).padStart(2, "0")}.png`,
 );
 
+/** web screens for every step, index-aligned with triptuneSlideshow.images (same step numbers) */
+export const triptuneDesktopAll = Array.from(
+  { length: 24 },
+  (_, i) => `/images/triptune/triptune-${String(i + 1).padStart(2, "0")}.png`,
+);
+
 export type ProjectLink = { label: string; href: string; external?: boolean };
 
 /** One slide in the main-page Selected Work showcase. */
@@ -203,13 +209,13 @@ export const projects: Project[] = [
     ],
     /** main-page summary column width, for copy that should hold two lines */
     summaryWidth: "33em",
-    stack: "Next.js · TypeScript · Supabase · Realtime · Responsive Web App",
+    stack: "Next.js · TypeScript · Supabase · Realtime",
     media: {
       type: "slideshow",
       images: triptuneSlideshow.images,
       captions: triptuneSlideshow.captions,
       orientation: "portrait",
-      secondaryImages: triptuneDesktopImages,
+      secondaryImages: triptuneDesktopAll,
     },
     thumb: triptuneSlideshow.images[0],
     links: [
@@ -228,7 +234,7 @@ export const projects: Project[] = [
       "핵심 내용을 빠르게 탐색할 수 있는 뉴스 대시보드.",
     ],
     summaryWidth: "33em",
-    stack: "Team Project · React · REST API · FastAPI · Responsive UI",
+    stack: "Team Project · React · REST API · FastAPI (연동)",
     media: {
       type: "video",
       src: "/video/string-time-news.mp4",
@@ -314,15 +320,6 @@ export type DetailScreensSection = {
   note?: string;
   items: { stage: string; title: string; note: string; src: string; w: number; h: number }[];
 };
-/** compact secondary gallery */
-export type DetailGallerySection = {
-  kind: "gallery";
-  title: string;
-  note?: string;
-  items: { src: string; caption: string }[];
-  w: number;
-  h: number;
-};
 /** Problem → Fix pairs beside screenshots */
 export type DetailFixesSection = {
   kind: "fixes";
@@ -337,7 +334,6 @@ export type DetailResultSection = { kind: "result"; title: string; items: string
 export type DetailSection =
   | DetailShowcaseSection
   | DetailScreensSection
-  | DetailGallerySection
   | DetailFixesSection
   | DetailResultSection
   | DetailInsightSection
@@ -357,6 +353,8 @@ export type ProjectDetail = {
   description: string;
   role: string[];
   team?: boolean;
+  /** 작업 기간 · 참여 형태 (사용자가 직접 알려준 사실만). 팀 인원·개인 담당 범위는 미확인 → 받으면 추가 */
+  period?: string;
   tech: string[];
   links: ProjectLink[];
   media?: ProjectMedia;
@@ -365,6 +363,7 @@ export type ProjectDetail = {
 
 /** TRIPTUNE — representative screens only (see `triptuneKeyScreens`), picked from the full 24-shot set */
 const tt = (n: number) => `/images/triptune-mobile/triptune-m-${String(n).padStart(2, "0")}.jpg`;
+const td = (n: number) => `/images/triptune/triptune-${String(n).padStart(2, "0")}.png`;
 const TT_W = 750;
 const TT_H = 1526;
 
@@ -419,15 +418,10 @@ const triptuneKeyScreens = [
   },
 ];
 
-const triptuneRepIds = triptuneKeyScreens.map((s) => s.n);
-const triptuneMoreScreens = triptuneSlideshow.images
-  .map((_, i) => i + 1)
-  .filter((n) => !triptuneRepIds.includes(n))
-  .map((n) => ({ src: tt(n), caption: triptuneSlideshow.captions[n - 1] }));
-
 export const projectDetails: Record<string, ProjectDetail> = {
   tonemate: {
     slug: "tonemate",
+    period: "1개월 · 개인 프로젝트",
     index: "01",
     title: "TONEMATE",
     subtitle: "Reference-based Image Tone Matching Tool",
@@ -635,8 +629,8 @@ export const projectDetails: Record<string, ProjectDetail> = {
             body: "미리보기와 다운로드 결과가 달라지지 않도록 동일한 WebGL 셰이더로 원본 해상도 결과물을 렌더링",
           },
           {
-            title: "브라우저 처리 성능",
-            body: "모든 처리가 브라우저에서 이뤄지는 구조의 트레이드오프를 인지하고, 매우 큰 이미지·다량 처리 시 성능이 기기 사양에 좌우될 수 있음을 감안해 설계",
+            title: "브라우저 처리 성능의 한계",
+            body: "모든 처리가 브라우저에서 이뤄지는 구조라 매우 큰 이미지나 다량 처리 시 속도가 기기 사양에 따라 달라질 수 있습니다. 대용량 처리 최적화는 이후 개선 과제로 남겨 두었습니다.",
           },
         ],
       },
@@ -653,6 +647,7 @@ export const projectDetails: Record<string, ProjectDetail> = {
   },
   triptune: {
     slug: "triptune",
+    period: "3주 · 개인 프로젝트",
     index: "02",
     title: "TRIPTUNE",
     subtitle: "Group Travel Decision Planner",
@@ -667,7 +662,6 @@ export const projectDetails: Record<string, ProjectDetail> = {
       "Supabase",
       "Realtime",
       "Zod",
-      "Responsive Web App",
     ],
     links: [
       { label: "Live Site", href: "https://triptune.vercel.app/", external: true },
@@ -678,7 +672,7 @@ export const projectDetails: Record<string, ProjectDetail> = {
       images: triptuneKeyScreens.map((s) => tt(s.n)),
       captions: triptuneKeyScreens.map((s) => s.title),
       orientation: "portrait",
-      secondaryImages: triptuneDesktopImages,
+      secondaryImages: triptuneKeyScreens.map((s) => td(s.n)),
     },
     sections: [
       {
@@ -715,14 +709,6 @@ export const projectDetails: Record<string, ProjectDetail> = {
           w: TT_W,
           h: TT_H,
         })),
-      },
-      {
-        kind: "gallery",
-        title: "More Screens",
-        note: `나머지 화면 ${triptuneMoreScreens.length}개이며, 같은 흐름의 세부 단계입니다.`,
-        items: triptuneMoreScreens,
-        w: TT_W,
-        h: TT_H,
       },
       {
         kind: "grid",
@@ -800,11 +786,12 @@ export const projectDetails: Record<string, ProjectDetail> = {
   },
   "string-time-news": {
     slug: "string-time-news",
+    period: "1개월 · 팀 프로젝트",
     index: "03",
     title: "STRING TIME NEWS",
     subtitle: "AI-curated News Dashboard",
     description: "여러 언론사의 기사를 이슈 단위로 묶고 요약해 주요 뉴스를 빠르게 파악할 수 있는 뉴스 대시보드.",
-    role: ["Frontend Development", "UI/UX", "API Integration"],
+    role: ["Frontend Development", "UX/UI", "API Integration"],
     team: true,
     tech: ["React", "Vite", "React Router", "Tailwind CSS", "REST API", "FastAPI (연동)"],
     media: {
@@ -834,7 +821,7 @@ export const projectDetails: Record<string, ProjectDetail> = {
           },
           {
             label: "My Role",
-            heading: "Frontend · UI/UX · API 연동",
+            heading: "Frontend · UX/UI · API 연동",
             body: "팀 프로젝트에서 로그인·홈·상세 화면과 공용 컴포넌트를 구현하고, FastAPI 백엔드와 연동했습니다.",
           },
         ],
@@ -1068,7 +1055,7 @@ export const footer = {
           href: "https://github.com/som1104",
           external: true,
         },
-        { label: "Resume", href: "#" },
+        // Resume: 연결할 파일/URL이 없어 일단 제거 (준비되면 { label: "Resume", href } 추가)
         { label: "Projects", href: "#project-01" },
       ],
     },

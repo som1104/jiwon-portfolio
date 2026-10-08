@@ -161,6 +161,33 @@ export default function SectionScroll() {
 
     const isPaged = () => window.innerWidth >= MIN_WIDTH;
 
+    /**
+     * Landing below the hero (back from a project page, #hash on load) leaves a
+     * freshly mounted hero in its *closed* state. On phones a closed hero
+     * swallows every touchmove (that is how its swipe-to-open works), so the
+     * page below would be impossible to scroll. The hero registers a tick
+     * after this effect runs, so wait for it, then open it instantly.
+     */
+    let openTimer = 0;
+    const openHeroSoon = (tries = 40) => {
+      window.clearTimeout(openTimer);
+      const hero = heroControl.get();
+      if (hero) {
+        if (window.scrollY > 2 && !hero.isExpanded()) hero.open();
+        // the hero's own mount-time reset can land right after registering
+        if (tries > 36) openTimer = window.setTimeout(() => openHeroSoon(tries - 1), 30);
+        return;
+      }
+      if (tries > 0) openTimer = window.setTimeout(() => openHeroSoon(tries - 1), 30);
+    };
+
+    /** touch / wheel on a closed hero is the hero's own gesture — but only
+     *  while we are actually at the top of the page */
+    const heroGestureLocked = () => {
+      const hero = heroControl.get();
+      return !!hero && !hero.isExpanded() && window.scrollY <= 2;
+    };
+
     /** move exactly one step in `dir` (+1 down / -1 up) */
     const step = async (dir: 1 | -1) => {
       if (animating) return;
@@ -211,6 +238,7 @@ export default function SectionScroll() {
           stops[index],
           instant || reduced ? 0 : STEP_MS,
         );
+        if (target > 0) openHeroSoon();
       } finally {
         animating = false;
       }
@@ -218,8 +246,7 @@ export default function SectionScroll() {
 
     // ---- wheel / trackpad -------------------------------------------------
     const onWheel = (e: WheelEvent) => {
-      const hero = heroControl.get();
-      const heroClosed = !!hero && !hero.isExpanded();
+      const heroClosed = heroGestureLocked();
       if (!isPaged() && !heroClosed) return; // phones scroll natively
       e.preventDefault();
 
@@ -242,8 +269,7 @@ export default function SectionScroll() {
       const t = e.target as HTMLElement | null;
       if (t && /^(input|textarea|select)$/i.test(t.tagName)) return;
       if (t?.isContentEditable) return;
-      const hero = heroControl.get();
-      const heroClosed = !!hero && !hero.isExpanded();
+      const heroClosed = heroGestureLocked();
       if (!isPaged() && !heroClosed) return;
 
       if (e.key === " ") {
@@ -273,8 +299,7 @@ export default function SectionScroll() {
       touchFired = false;
     };
     const onTouchMove = (e: TouchEvent) => {
-      const hero = heroControl.get();
-      const heroClosed = !!hero && !hero.isExpanded();
+      const heroClosed = heroGestureLocked();
       const paged = isPaged();
       if (!paged && !heroClosed) return; // native scrolling on phones
       if (e.cancelable) e.preventDefault();
@@ -387,8 +412,7 @@ export default function SectionScroll() {
       pendingHash = initial;
       void goToElement(initial, true);
       settleTimer = window.setTimeout(endSettling, 2500);
-    }
-    else jump(0);
+    } else jump(0);
 
     window.addEventListener("wheel", endSettling, { passive: true });
     window.addEventListener("touchstart", endSettling, { passive: true });
@@ -416,6 +440,7 @@ export default function SectionScroll() {
       window.clearTimeout(scrollTimer);
       window.clearTimeout(resizeTimer);
       window.clearTimeout(settleTimer);
+      window.clearTimeout(openTimer);
       ro?.disconnect();
       window.removeEventListener("load", recompute);
       window.removeEventListener("wheel", onWheel);

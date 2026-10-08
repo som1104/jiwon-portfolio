@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ImageFrame from "@/components/ds/ImageFrame";
 import Slideshow from "@/components/ds/Slideshow";
+import SlideshowPair from "@/components/ds/SlideshowPair";
 import DetailSection from "@/components/project-detail/DetailSection";
 import MarqueeBand from "@/components/MarqueeBand";
 import Footer from "@/components/Footer";
@@ -88,9 +89,14 @@ export default function ProjectDetailPage({
               <p className="about__meta-k">Role</p>
               <p className="about__meta-v">
                 {detail.role.join(" / ")}
-                {detail.team ? " · Team Project" : ""}
               </p>
             </div>
+            {detail.period ? (
+              <div>
+                <p className="about__meta-k">Period</p>
+                <p className="about__meta-v">{detail.period}</p>
+              </div>
+            ) : null}
             <div>
               <p className="about__meta-k">Tech</p>
               <p className="about__meta-v">{detail.tech.join(" · ")}</p>
@@ -121,29 +127,13 @@ export default function ProjectDetailPage({
               <ImageFrame src={detail.media.src} alt={detail.title} ratio="16 / 10" />
             ) : detail.media?.type === "slideshow" ? (
               detail.media.secondaryImages?.length ? (
-                <div className="project__visual-pair">
-                  <figure className="frame">
-                    <div
-                      className={`frame__well project__well${
-                        detail.media.orientation === "portrait" ? " project__well--portrait" : ""
-                      }`}
-                    >
-                      <Slideshow
-                        images={detail.media.images}
-                        captions={detail.media.captions}
-                        alt={detail.title}
-                      />
-                    </div>
-                  </figure>
-                  <figure className="frame">
-                    <div className="frame__well project__well project__well--desktop-slide">
-                      <Slideshow
-                        images={detail.media.secondaryImages}
-                        alt={`${detail.title} 웹 버전`}
-                      />
-                    </div>
-                  </figure>
-                </div>
+                <SlideshowPair
+                  images={detail.media.images}
+                  captions={detail.media.captions}
+                  secondaryImages={detail.media.secondaryImages}
+                  alt={detail.title}
+                  portrait={detail.media.orientation === "portrait"}
+                />
               ) : (
                 <figure className="frame">
                   <div
@@ -177,7 +167,7 @@ export default function ProjectDetailPage({
       </div>
 
       <MarqueeBand />
-      <Footer />
+      <Footer projectsHref={backHref} />
     </main>
   );
 }

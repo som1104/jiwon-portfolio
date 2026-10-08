@@ -1,7 +1,8 @@
 import SiteFooter from "@/components/ds/SiteFooter";
 import { footer } from "@/components/data";
 
-export default function Footer() {
+/** `projectsHref`: where the footer "Projects" link goes (detail pages point it at the main page). */
+export default function Footer({ projectsHref }: { projectsHref?: string }) {
   return (
     <div className="contact" id="contact" data-reveal="fade">
       <SiteFooter
@@ -9,7 +10,12 @@ export default function Footer() {
         tagline={footer.tagline}
         email={footer.email}
         note={footer.note}
-        columns={footer.columns}
+        columns={footer.columns.map((col) => ({
+          ...col,
+          links: col.links.map((l) =>
+            projectsHref && l.label === "Projects" ? { ...l, href: projectsHref } : l,
+          ),
+        }))}
       />
     </div>
   );

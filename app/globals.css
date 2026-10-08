@@ -623,7 +623,10 @@ html.reveal-on .hero__img {
   .project__visual-pair .project__well--portrait {
     width: 100%;
     height: auto;
-    max-width: 320px;
+    /* 폰 스크린샷은 비율 그대로 전체가 보이게 (높이 제한으로 잘리지 않게),
+       웹 화면 없이 단독으로 보이므로 화면 폭에 맞춰 적당히 제한 */
+    max-width: 280px;
+    max-height: none;
     margin-inline: auto;
   }
 
@@ -632,6 +635,11 @@ html.reveal-on .hero__img {
     height: auto;
     aspect-ratio: 16 / 10;
     margin-inline: auto;
+  }
+
+  /* 모바일: 폰 화면만 대표로 보여주고 웹 화면은 숨김 */
+  .project__visual-pair .project__pair-web {
+    display: none;
   }
 }
 
@@ -1119,6 +1127,23 @@ html.paged {
   white-space: nowrap;
 }
 
+/* 좁은 화면: 위쪽 모바일 규칙이 소스 순서상 이 기본값에 덮여 큰 제목이
+   뷰포트 밖으로 밀려나던 문제 → 기본 규칙 뒤에서 다시 적용 */
+@media (max-width: 600px) {
+  .about__heading {
+    font-size: clamp(30px, 9.4vw, 40px);
+  }
+
+  .about__line {
+    white-space: normal;
+  }
+
+  /* 좁은 폭에서는 고정 줄바꿈 대신 균형 줄바꿈 */
+  .about__quote br {
+    display: none;
+  }
+}
+
 .about__aside {
   display: flex;
   flex-direction: column;
@@ -1419,8 +1444,8 @@ html.paged {
 }
 
 .project__facts {
-  /* the flexible gap sits here: between the description block above and the facts/links block below */
-  margin: auto 0 0;
+  /* 세 프로젝트 모두 설명 → facts 간격을 같게 유지 (예전: auto로 하단 정렬되어 카드마다 간격이 달랐음) */
+  margin: var(--space-8) 0 0;
   max-width: 46ch;
   border-top: var(--border-width) solid var(--border-hairline);
 }
@@ -2114,11 +2139,6 @@ html.paged {
 }
 
 /* ---- case-study visual evidence: showcase rows, screens, gallery, fixes, result ---- */
-.detail-section__title--sub {
-  font-size: clamp(20px, 2.2vw, 26px);
-  color: var(--text-secondary);
-}
-
 .detail-section__lede {
   margin: var(--space-3) 0 0;
   font-family: var(--font-text);
@@ -2359,29 +2379,6 @@ html.paged {
   color: var(--text-secondary);
 }
 
-.detail-gallery {
-  list-style: none;
-  margin: var(--space-5) 0 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: var(--space-5) var(--space-4);
-}
-
-@media (max-width: 1000px) {
-  .detail-gallery {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-.detail-gallery p {
-  margin: var(--space-2) 0 0;
-  font-family: var(--font-text);
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--text-secondary);
-}
-
 /* Problem → Fix beside mobile screenshots */
 .detail-fixes {
   display: grid;
@@ -2529,9 +2526,6 @@ html.paged {
     flex: 0 0 62%;
     scroll-snap-align: start;
   }
-  .detail-gallery {
-    grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
-  }
 }
 
 /* ── 한 단어만 다음 줄로 넘어가는 줄바꿈(고아 단어) 방지 ───────────── */
@@ -2550,3 +2544,32 @@ html.paged {
 .detail-show__lead,
 .frame-slides__caption,
 .detail-screens__title { text-wrap: balance; }
+
+/* 모바일 상세 히어로: 폰 화면 단독 표시 — 너무 커 보이지 않게 폭 제한 (비율 유지, 잘림 없음) */
+@media (max-width: 900px) {
+  .detail-hero__visual .project__visual-pair .project__well--portrait {
+    max-width: 300px;
+    margin-inline: auto;
+  }
+}
+
+/* 모바일: Problem→Fix 옆 폰 스크린샷도 옆으로 넘겨 보는 가로 스와이프 행 */
+@media (max-width: 600px) {
+  .detail-fixes__media {
+    display: flex;
+    min-width: 0;
+    max-width: none;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: var(--space-5);
+    margin-inline: calc(var(--page-pad) * -1);
+    padding-inline: var(--page-pad);
+    padding-bottom: var(--space-3);
+    -webkit-overflow-scrolling: touch;
+  }
+  .detail-fixes__media > .detail-shot {
+    flex: 0 0 62%;
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+}

@@ -77,9 +77,9 @@ export default function About() {
         </h2>
         <div className="about__aside" ref={asideRef}>
           <p className="about__quote">
-            “ {about.quote[0]}
+            “ {about.quote[0]}{" "}
             <br />
-            {about.quote[1]} ”
+            {about.quote[1]} ”
           </p>
           <p className="about__body">{about.body}</p>
           <div className="about__meta">

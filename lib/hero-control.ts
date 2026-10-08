@@ -12,6 +12,9 @@ export type HeroApi = {
   expand: () => Promise<void>;
   /** animate the media closed; resolves when fully collapsed */
   collapse: () => Promise<void>;
+  /** jump straight to the open state, no animation (used when a page is
+   *  re-entered already scrolled past the hero, e.g. back from a project) */
+  open: () => void;
   isExpanded: () => boolean;
   /** true while an expand / collapse animation is running */
   isAnimating: () => boolean;

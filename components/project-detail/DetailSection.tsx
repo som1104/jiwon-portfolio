@@ -123,32 +123,6 @@ export default function DetailSection({ section }: { section: DetailSectionType 
         </section>
       );
 
-    case "gallery":
-      return (
-        <section className="detail-section detail-section--wide" data-reveal>
-          <h2 className="detail-section__title detail-section__title--sub">{section.title}</h2>
-          {section.note ? <p className="detail-flow__caption">{section.note}</p> : null}
-          <ul className="detail-gallery">
-            {section.items.map((item) => (
-              <li key={item.src}>
-                <figure className="detail-shot detail-shot--phone">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.src}
-                    alt={item.caption}
-                    width={section.w}
-                    height={section.h}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </figure>
-                <p>{item.caption}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      );
-
     case "fixes":
       return (
         <section className="detail-section detail-section--wide" data-reveal>
