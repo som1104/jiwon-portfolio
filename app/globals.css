@@ -1444,8 +1444,9 @@ html.paged {
 }
 
 .project__facts {
-  /* 세 프로젝트 모두 설명 → facts 간격을 같게 유지 (예전: auto로 하단 정렬되어 카드마다 간격이 달랐음) */
-  margin: var(--space-8) 0 0;
+  /* the flexible gap sits here: between the description block above and the facts/links block below —
+     this keeps the links row bottom-aligned with the bottom edge of the visual */
+  margin: auto 0 0;
   max-width: 46ch;
   border-top: var(--border-width) solid var(--border-hairline);
 }
