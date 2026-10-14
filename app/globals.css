@@ -2517,6 +2517,7 @@ html.paged {
     display: flex;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--page-pad); /* 스냅 시 첫 이미지가 화면 왼쪽 끝에 붙지 않게 */
     gap: var(--space-5);
     margin-inline: calc(var(--page-pad) * -1);
     padding-inline: var(--page-pad);
@@ -2562,6 +2563,7 @@ html.paged {
     max-width: none;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--page-pad); /* 스냅 시 첫 이미지가 화면 왼쪽 끝에 붙지 않게 */
     gap: var(--space-5);
     margin-inline: calc(var(--page-pad) * -1);
     padding-inline: var(--page-pad);

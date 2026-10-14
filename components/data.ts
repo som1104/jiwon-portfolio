@@ -58,7 +58,7 @@ export const techStack = [
   { title: "Frontend", items: ["JavaScript", "TypeScript", "React", "Next.js"] },
   { title: "UI", items: ["HTML", "CSS", "Tailwind CSS", "Responsive UI"] },
   { title: "Data / Backend", items: ["Supabase", "REST API"] },
-  { title: "Tools", items: ["Git", "GitHub", "Vercel", "Figma"] },
+  { title: "Tools", items: ["Git", "GitHub", "Vercel"] },
 ];
 
 export type ProjectMedia =
@@ -829,7 +829,6 @@ export const projectDetails: Record<string, ProjectDetail> = {
       {
         kind: "showcase",
         title: "Key Screens",
-        intro: "제가 구현한 화면 옆에 맡은 역할을 함께 표시했습니다.",
         rows: [
           {
             label: "01 — 홈",
