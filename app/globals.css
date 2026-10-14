@@ -1502,6 +1502,14 @@ html.paged {
   color: var(--text-secondary);
 }
 
+.project__note {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-text);
+  font-size: calc(12px / var(--pz));
+  letter-spacing: var(--track-label);
+  color: var(--text-secondary);
+}
+
 .project__links {
   display: flex;
   flex-wrap: wrap;

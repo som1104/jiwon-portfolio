@@ -165,6 +165,8 @@ export type Project = {
   /** main-page Problem / Solution / Focus rows; falls back to the detail page's "At a Glance" when omitted */
   facts?: { label: string; value: string }[];
   stack: string;
+  /** small note under the stack line (e.g. demo data date) */
+  note?: string;
   /** team-project credit chips (e.g. STRING TIME NEWS) */
   roleTags?: string[];
   media?: ProjectMedia;
@@ -235,6 +237,7 @@ export const projects: Project[] = [
     ],
     summaryWidth: "33em",
     stack: "Team Project · React · REST API · FastAPI (연동)",
+    note: "Demo Data · 2026.07.15 기준",
     media: {
       type: "video",
       src: "/video/string-time-news.mp4",
@@ -1024,7 +1027,7 @@ export const projectDetails: Record<string, ProjectDetail> = {
           },
           {
             title: "정적 데이터 전환을 통한 초기 로딩 성능 개선",
-            body: "Render 무료 인스턴스의 Cold Start로 인해 최초 뉴스 조회 시 지연이 발생하는 문제를 개선했습니다. 포트폴리오 데모에서 사용하는 고정 뉴스 데이터를 정적 JSON으로 전환하고, Vercel에서 직접 제공하도록 데이터 조회 구조를 변경했습니다. 이를 통해 기존 UI와 주요 기능을 유지하면서 백엔드 서버 의존성을 줄이고, 초기 로딩의 안정성을 개선했습니다.",
+            body: "Render 무료 인스턴스의 Cold Start로 발생하는 초기 로딩 지연을 개선하기 위해, 기존 API 기반 데이터 조회 방식을 정적 JSON 방식으로 전환했습니다. 2026년 7월 15일에 수집된 뉴스 데이터를 Vercel에서 직접 제공하여, 기존 UI와 주요 기능을 유지하면서 서버 의존성을 제거하고 초기 로딩 안정성을 개선했습니다.",
           },
         ],
       },

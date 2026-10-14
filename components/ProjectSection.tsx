@@ -179,6 +179,7 @@ export default function ProjectSection({
             </dl>
           ) : null}
           <p className="project__stack">{project.stack}</p>
+          {project.note ? <p className="project__note">{project.note}</p> : null}
           <div className="project__links">
             <Link
               className="work__link project__link--primary"
